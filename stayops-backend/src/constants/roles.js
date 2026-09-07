@@ -1,0 +1,13 @@
+const ROLES = {
+  SUPER_ADMIN: 'SUPER_ADMIN',
+  OWNER: 'OWNER',
+  RESIDENT: 'RESIDENT',
+};
+
+const STATUS = {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  BLOCKED: 'BLOCKED',
+};
+
+module.exports = { ROLES, STATUS };
