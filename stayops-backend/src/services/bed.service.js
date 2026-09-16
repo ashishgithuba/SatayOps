@@ -2,7 +2,7 @@ const { Bed, Room, Floor, PG } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 const createBed = async (bedData, ownerId) => {
-  const { pg_id, floor_id, room_id, bed_number, status, description } = bedData;
+  const { pg_id, floor_id, room_id, bed_number, status, description, default_rent, default_security_deposit } = bedData;
 
   // Verify room exists
   const room = await Room.findByPk(room_id);
@@ -46,6 +46,8 @@ const createBed = async (bedData, ownerId) => {
     bed_number,
     status: status || 'AVAILABLE',
     description: description || null,
+    default_rent: default_rent || 0,
+    default_security_deposit: default_security_deposit || 0,
   });
 
   return bed;
@@ -124,7 +126,7 @@ const updateBed = async (id, updateData) => {
     throw new ApiError(404, 'Bed not found');
   }
 
-  const { bed_number, status, description, room_id } = updateData;
+  const { bed_number, status, description, room_id, default_rent, default_security_deposit } = updateData;
 
   const targetRoomId = room_id || bed.room_id;
 
@@ -150,6 +152,8 @@ const updateBed = async (id, updateData) => {
 
   if (status) bed.status = status;
   if (description !== undefined) bed.description = description;
+  if (default_rent !== undefined) bed.default_rent = default_rent;
+  if (default_security_deposit !== undefined) bed.default_security_deposit = default_security_deposit;
 
   await bed.save();
   return bed;

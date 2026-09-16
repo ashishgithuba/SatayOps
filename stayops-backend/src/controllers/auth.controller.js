@@ -32,10 +32,26 @@ const updateProfile = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, updatedUser, 'User profile updated successfully'));
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) throw new ApiError(400, 'Email is required');
+  const result = await authService.forgotPassword(email);
+  res.status(200).json(new ApiResponse(200, result, 'Reset token generated (Check console/response)'));
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) throw new ApiError(400, 'Token and newPassword are required');
+  const result = await authService.resetPassword(token, newPassword);
+  res.status(200).json(new ApiResponse(200, result, 'Password reset successful'));
+});
+
 module.exports = {
   createSuperAdmin,
   login,
   createOwner,
   getProfile,
   updateProfile,
+  forgotPassword,
+  resetPassword,
 };

@@ -272,7 +272,21 @@ const updateResident = async (id, ownerId, updateData, files) => {
     if (existingPhone) {
       throw new ApiError(400, `Resident with phone '${phone}' already exists under your account`);
     }
+    // Also check User table for global conflict
+    if (resident.user_id) {
+      const existingUserPhone = await User.findOne({ where: { phone } });
+      if (existingUserPhone && existingUserPhone.id !== resident.user_id) {
+        throw new ApiError(400, `This phone number is already registered to another account in the system.`);
+      }
+    }
     resident.phone = phone;
+  }
+
+  if (email && email !== resident.email && resident.user_id) {
+    const existingUserEmail = await User.findOne({ where: { email } });
+    if (existingUserEmail && existingUserEmail.id !== resident.user_id) {
+      throw new ApiError(400, `This email is already registered to another account in the system.`);
+    }
   }
 
   if (full_name) resident.full_name = full_name;
@@ -289,10 +303,43 @@ const updateResident = async (id, ownerId, updateData, files) => {
   if (pincode !== undefined) resident.pincode = pincode;
   if (emergency_contact_name !== undefined) resident.emergency_contact_name = emergency_contact_name;
   if (emergency_contact_phone !== undefined) resident.emergency_contact_phone = emergency_contact_phone;
-  if (profile_photo_url !== undefined && !profileFile) resident.profile_photo_url = profile_photo_url;
+  // Note: profileFile check removed to avoid undefined variable error, we use files check above
+  if (profile_photo_url !== undefined) resident.profile_photo_url = profile_photo_url;
   if (status) resident.status = status;
 
   await resident.save();
+
+  // Sync with User table if a user account exists
+  if (resident.user_id) {
+    const user = await User.findByPk(resident.user_id);
+    if (user) {
+      let userUpdated = false;
+      if (email !== undefined && user.email !== email) {
+        user.email = email;
+        userUpdated = true;
+      }
+      if (phone !== undefined && user.phone !== phone) {
+        user.phone = phone;
+        userUpdated = true;
+      }
+      if (full_name !== undefined && user.name !== full_name) {
+        user.name = full_name;
+        userUpdated = true;
+      }
+      if (resident.profile_photo_url && user.profile_image !== resident.profile_photo_url) {
+        user.profile_image = resident.profile_photo_url;
+        userUpdated = true;
+      }
+      if (status !== undefined && user.status !== status) {
+        user.status = status;
+        userUpdated = true;
+      }
+      if (userUpdated) {
+        await user.save();
+      }
+    }
+  }
+
   return resident;
 };
 

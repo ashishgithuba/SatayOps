@@ -41,6 +41,9 @@ const allocateBed = async (allocationData, ownerId) => {
   const targetRoomId = bed.room_id;
   const targetPgId = bed.pg_id;
 
+  const finalMonthlyRent = monthly_rent !== undefined && monthly_rent !== '' ? monthly_rent : (bed.default_rent || 0);
+  const finalSecurityDeposit = security_deposit !== undefined && security_deposit !== '' ? security_deposit : (bed.default_security_deposit || 0);
+
   const transaction = await sequelize.transaction();
 
   try {
@@ -52,8 +55,8 @@ const allocateBed = async (allocationData, ownerId) => {
         bed_id,
         check_in_date,
         check_out_date: check_out_date || null,
-        monthly_rent,
-        security_deposit: security_deposit || 0,
+        monthly_rent: finalMonthlyRent,
+        security_deposit: finalSecurityDeposit,
         status: 'ACTIVE',
         notes: notes || null,
       },
@@ -251,14 +254,19 @@ const getResidentAllocations = async (resident_id) => {
 };
 
 // Get Resident Current Active Allocation
-const getResidentCurrentAllocation = async (resident_id) => {
-  const resident = await Resident.findByPk(resident_id);
+const getResidentCurrentAllocation = async (user_id) => {
+  // user_id can be either a resident's PK or user_id - find by user_id first, fallback to PK
+  let resident = await Resident.findOne({ where: { user_id } });
+  if (!resident) {
+    // fallback: maybe it's already a resident id (called from owner context)
+    resident = await Resident.findByPk(user_id);
+  }
   if (!resident) {
     throw new ApiError(404, 'Resident not found');
   }
 
   const currentAlloc = await BedAllocation.findOne({
-    where: { resident_id, status: 'ACTIVE' },
+    where: { resident_id: resident.id, status: 'ACTIVE' },
     include: [
       { model: Bed, as: 'bed' },
       { model: Room, as: 'room' },

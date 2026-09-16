@@ -44,9 +44,22 @@ const getResidentCurrentAllocation = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, currentAlloc, 'Resident current active stay fetched successfully'));
 });
 
+const { Resident } = require('../models');
+
+// Get My Allocation (GET /allocations/my) for Resident
+const getMyAllocation = asyncHandler(async (req, res) => {
+  const resident = await Resident.findOne({ where: { user_id: req.user.id } });
+  if (!resident) {
+    return res.status(404).json(new ApiResponse(404, null, 'Resident profile not found'));
+  }
+  const currentAlloc = await allocService.getResidentCurrentAllocation(resident.id);
+  res.status(200).json(new ApiResponse(200, currentAlloc, 'My allocation fetched successfully'));
+});
+
 module.exports = {
   allocateBed,
   getAllocations,
+  getMyAllocation,
   getAllocationById,
   checkoutAllocation,
   transferBed,

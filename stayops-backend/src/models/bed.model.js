@@ -37,6 +37,16 @@ const Bed = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    default_rent: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
+    default_security_deposit: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.0,
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,

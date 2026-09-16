@@ -20,10 +20,13 @@ router.post(
 );
 
 // 2. Get All allocations (GET /allocations)
-router.get('/allocations', allocController.getAllocations);
+router.get('/allocations', authorize(ROLES.OWNER, ROLES.SUPER_ADMIN), allocController.getAllocations);
+
+// Resident specific route to get their own current allocation
+router.get('/allocations/my', authorize(ROLES.RESIDENT), allocController.getMyAllocation);
 
 // 3. Get Single allocation by ID (GET /allocations/:id)
-router.get('/allocations/:id', allocController.getAllocationById);
+router.get('/allocations/:id', authorize(ROLES.OWNER, ROLES.SUPER_ADMIN), allocController.getAllocationById);
 
 // 4. Checkout bed (POST /allocations/:id/checkout)
 router.post(

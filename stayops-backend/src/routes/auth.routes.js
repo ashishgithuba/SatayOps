@@ -24,4 +24,8 @@ router.post(
 router.get('/profile', protect, authController.getProfile);
 router.patch('/profile', protect, validateUpdateUser, authController.updateProfile);
 
+// 5. Forgot & Reset Password (Public)
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
+
 module.exports = router;
