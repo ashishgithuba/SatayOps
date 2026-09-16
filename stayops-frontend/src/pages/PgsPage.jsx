@@ -2,6 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { pgService } from '../services/api.service';
 import { Building2, Plus, MapPin, Phone, Mail, CheckCircle2, RefreshCw, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
+const inputStyle = {
+  width: '100%',
+  padding: '0.7rem 0.85rem',
+  background: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  borderRadius: '8px',
+  color: '#060913',
+  fontSize: '0.88rem',
+  outline: 'none',
+};
+
+const labelStyle = {
+  display: 'block',
+  color: '#060913',
+  fontSize: '0.85rem',
+  marginBottom: '0.35rem',
+  fontWeight: '600',
+};
+
 export default function PgsPage() {
   const [pgs, setPgs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,7 +50,7 @@ export default function PgsPage() {
     setLoading(true);
     try {
       const res = await pgService.getMyPgs({ page: targetPage, limit });
-      setPgs(res.rows || []);
+      setPgs(res.data || []);
       if (res.pagination) {
         setPagination(res.pagination);
       }
@@ -286,6 +305,7 @@ export default function PgsPage() {
             justifyContent: 'center',
             padding: '1.5rem 1rem',
             overflowY: 'auto',
+            overflowX: 'hidden',
           }}
         >
           <div
@@ -296,8 +316,6 @@ export default function PgsPage() {
               borderRadius: '16px',
               width: '100%',
               maxWidth: '560px',
-              maxHeight: '90vh',
-              overflowY: 'auto',
               padding: '2rem',
               boxShadow: '0 25px 50px rgba(0,0,0,0.7)',
               position: 'relative',
@@ -319,7 +337,7 @@ export default function PgsPage() {
             <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
               <div className="responsive-grid-2">
                 <div>
-                  <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>PG Name *</label>
+                  <label style={labelStyle}>PG Name *</label>
                   <input
                     type="text"
                     name="name"
@@ -327,17 +345,17 @@ export default function PgsPage() {
                     onChange={handleChange}
                     required
                     placeholder="e.g. StayOps Executive PG"
-                    style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>PG Type (Gender) *</label>
+                  <label style={labelStyle}>PG Type (Gender) *</label>
                   <select
                     name="gender_type"
                     value={formData.gender_type}
                     onChange={handleChange}
                     required
-                    style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    style={inputStyle}
                   >
                     <option value="MALE">Male PG</option>
                     <option value="FEMALE">Female PG</option>
@@ -347,7 +365,7 @@ export default function PgsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>Address *</label>
+                <label style={labelStyle}>Address *</label>
                 <input
                   type="text"
                   name="address_line"
@@ -355,13 +373,13 @@ export default function PgsPage() {
                   onChange={handleChange}
                   required
                   placeholder="Street / Building No."
-                  style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                  style={inputStyle}
                 />
               </div>
 
               <div className="responsive-grid-3">
                 <div>
-                  <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>City *</label>
+                  <label style={labelStyle}>City *</label>
                   <input
                     type="text"
                     name="city"
@@ -369,67 +387,67 @@ export default function PgsPage() {
                     onChange={handleChange}
                     required
                     placeholder="City"
-                    style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>State</label>
+                  <label style={labelStyle}>State</label>
                   <input
                     type="text"
                     name="state"
                     value={formData.state}
                     onChange={handleChange}
                     placeholder="State"
-                    style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>Pincode</label>
+                  <label style={labelStyle}>Pincode</label>
                   <input
                     type="text"
                     name="pincode"
                     value={formData.pincode}
                     onChange={handleChange}
                     placeholder="Pincode"
-                    style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    style={inputStyle}
                   />
                 </div>
               </div>
 
               <div className="responsive-grid-2">
                 <div>
-                  <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>Phone</label>
+                  <label style={labelStyle}>Phone</label>
                   <input
                     type="text"
                     name="contact_phone"
                     value={formData.contact_phone}
                     onChange={handleChange}
                     placeholder="Contact Number"
-                    style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    style={inputStyle}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>Email</label>
+                  <label style={labelStyle}>Email</label>
                   <input
                     type="email"
                     name="contact_email"
                     value={formData.contact_email}
                     onChange={handleChange}
                     placeholder="Contact Email"
-                    style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                    style={inputStyle}
                   />
                 </div>
               </div>
 
               <div>
-                <label style={{ display: 'block', color: '#060913', fontSize: '0.85rem', marginBottom: '0.35rem', fontWeight: '600' }}>Description</label>
+                <label style={labelStyle}>Description</label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
                   rows={2}
                   placeholder="Optional details about facilities..."
-                  style={{ width: '100%', padding: '0.7rem', background: '#f8fafc', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                  style={inputStyle}
                 />
               </div>
 

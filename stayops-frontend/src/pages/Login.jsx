@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 // eslint-disable-next-line no-unused-vars
@@ -441,7 +441,7 @@ export default function Login() {
               <div style={S.fieldWrap}>
                 <div style={S.passLabelRow}>
                   <label style={S.label}>Password</label>
-                  <a href="#" style={S.forgotLink}>Forgot Password?</a>
+                  <Link to="/forgot-password" style={S.forgotLink}>Forgot Password?</Link>
                 </div>
                 <div style={S.inputWrap}>
                   <span style={{ ...S.inputIcon, color: passHasError ? '#f87171' : 'rgba(255,255,255,0.3)' }}>

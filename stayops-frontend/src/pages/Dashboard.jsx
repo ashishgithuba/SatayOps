@@ -17,6 +17,41 @@ import {
   Legend,
 } from 'recharts';
 
+// Inject scrollbar styles with multiple browser support
+if (typeof document !== 'undefined' && !document.querySelector('[data-scrollbar-style]')) {
+  const scrollbarStyle = document.createElement('style');
+  scrollbarStyle.setAttribute('data-scrollbar-style', 'true');
+  scrollbarStyle.textContent = `
+    .dashboard-scroll-container {
+      scrollbar-width: none;
+      -ms-overflow-style: -ms-autohiding-scrollbar;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+    
+    .dashboard-scroll-container::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+    
+    .dashboard-scroll-container::-webkit-scrollbar-track {
+      display: none !important;
+      background: transparent !important;
+    }
+    
+    .dashboard-scroll-container::-webkit-scrollbar-thumb {
+      display: none !important;
+      background: transparent !important;
+    }
+    
+    .dashboard-scroll-container {
+      scrollbar-gutter: stable;
+    }
+  `;
+  document.head.appendChild(scrollbarStyle);
+}
+
 export default function Dashboard() {
   const [stats, setStats] = useState({
     pgs: 0,
@@ -31,6 +66,15 @@ export default function Dashboard() {
   const [pieData, setPieData] = useState([]);
   const [monthlyTrend, setMonthlyTrend] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Ensure scrollbar hiding styles are active
+    const container = document.querySelector('.dashboard-scroll-container');
+    if (container) {
+      container.style.scrollbarWidth = 'none';
+      container.style.msOverflowStyle = 'none';
+    }
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -150,7 +194,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="dashboard-scroll-container" style={{ maxWidth: '1400px', margin: '0 auto', height: '100vh', overflowY: 'scroll', overflowX: 'hidden', paddingRight: '0', WebkitScrollbar: 'none', msOverflowStyle: 'none' }}>
       {/* Header Banner */}
       <div
         style={{
@@ -164,6 +208,7 @@ export default function Dashboard() {
           justifyContent: 'space-between',
           alignItems: 'flex-start',
           gap: '1rem',
+          marginTop: '1rem',
         }}
       >
         <div style={{ flex: '1 1 260px', minWidth: 0 }}>

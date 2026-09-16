@@ -3,11 +3,22 @@ import { pgService, floorService, roomService } from '../services/api.service';
 import { Layers, Plus, X, Building2, Tag } from 'lucide-react';
 
 const inputStyle = {
-  width: '100%', padding: '0.75rem', background: '#ffffff', fontSize: '1rem',
-  border: '1px solid #cbd5e1', borderRadius: '8px', color: '#060913',
+  width: '100%',
+  padding: '0.7rem 0.85rem',
+  background: '#f8fafc',
+  border: '1px solid #e2e8f0',
+  borderRadius: '8px',
+  color: '#060913',
+  fontSize: '0.88rem',
+  outline: 'none',
 };
+
 const labelStyle = {
-  display: 'block', color: '#060913', fontSize: '0.95rem', marginBottom: '0.4rem', fontWeight: '700',
+  display: 'block',
+  color: '#060913',
+  fontSize: '0.85rem',
+  marginBottom: '0.35rem',
+  fontWeight: '600',
 };
 
 export default function RoomsPage() {
@@ -22,14 +33,14 @@ export default function RoomsPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const [floorForm, setFloorForm] = useState({ pg_id: '', floor_number: '', floor_name: '' });
+  const [floorForm, setFloorForm] = useState({ pg_id: '', floor_number: '', name: '' });
   const [roomForm, setRoomForm] = useState({
     floor_id: '', room_number: '', room_type: 'SINGLE', description: '',
   });
 
   useEffect(() => {
     pgService.getMyPgs().then(res => {
-      const list = res.rows || [];
+      const list = res.data || [];
       setPgs(list);
       if (list.length > 0) {
         setSelectedPg(list[0].id);
@@ -60,7 +71,7 @@ export default function RoomsPage() {
     if (!selectedFloor) return;
     setLoading(true);
     roomService.getRoomsByFloor(selectedFloor)
-      .then(res => setRooms(res.rows || []))
+      .then(res => setRooms(res.data || []))
       .catch(() => setRooms([]))
       .finally(() => setLoading(false));
   }, [selectedFloor]);
@@ -75,7 +86,7 @@ export default function RoomsPage() {
     try {
       await floorService.createFloor({ ...floorForm, pg_id: selectedPg });
       setShowFloorModal(false);
-      setFloorForm({ pg_id: selectedPg, floor_number: '', floor_name: '' });
+      setFloorForm({ pg_id: selectedPg, floor_number: '', name: '' });
       const res = await floorService.getFloorsByPg(selectedPg);
       setFloors(res.data || []);
     } catch (err) {
@@ -94,7 +105,7 @@ export default function RoomsPage() {
       setShowRoomModal(false);
       setRoomForm({ floor_id: selectedFloor, room_number: '', room_type: 'SINGLE', description: '' });
       const res = await roomService.getRoomsByFloor(selectedFloor);
-      setRooms(res.rows || []);
+      setRooms(res.data || []);
     } catch (err) {
       setError(err.message || 'Failed to create room');
     } finally {
@@ -109,7 +120,8 @@ export default function RoomsPage() {
   };
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+    <>
+      <div className="animate-fade-in" style={{ maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: '800', color: '#060913' }}>Floors & Rooms Directory</h1>
@@ -171,7 +183,7 @@ export default function RoomsPage() {
           <label style={labelStyle}>Selected Floor</label>
           <select value={selectedFloor} onChange={e => setSelectedFloor(e.target.value)} style={{ ...inputStyle, background: '#ffffff' }}>
             <option value="">-- Choose Floor --</option>
-            {floors.map(fl => <option key={fl.id} value={fl.id}>{fl.floor_name ? `${fl.floor_name} (Floor ${fl.floor_number})` : `Floor ${fl.floor_number}`}</option>)}
+            {floors.map(fl => <option key={fl.id} value={fl.id}>{fl.name ? `${fl.name} (Floor ${fl.floor_number})` : `Floor ${fl.floor_number}`}</option>)}
           </select>
         </div>
       </div>
@@ -181,7 +193,7 @@ export default function RoomsPage() {
         <div style={{ background: 'rgba(255, 211, 105, 0.12)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '10px', padding: '0.85rem 1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#b45309', fontWeight: '700', fontSize: '0.92rem' }}>
             <Layers size={18} />
-            <span>Currently Viewing: <strong style={{ color: '#78350f' }}>{activeFloorObj.floor_name || `Floor ${activeFloorObj.floor_number}`}</strong> ({activePgObj?.name})</span>
+            <span>Currently Viewing: <strong style={{ color: '#78350f' }}>{activeFloorObj.name || `Floor ${activeFloorObj.floor_number}`}</strong> ({activePgObj?.name})</span>
           </div>
           <span style={{ fontSize: '0.8rem', background: 'linear-gradient(135deg, #ffd369 0%, #faab36 100%)', color: '#060913', padding: '0.2rem 0.6rem', borderRadius: '6px', fontWeight: '800' }}>
             {rooms.length} Room{rooms.length !== 1 ? 's' : ''}
@@ -214,7 +226,7 @@ export default function RoomsPage() {
                     transition: 'all 0.2s ease',
                   }}
                 >
-                  🏢 {fl.floor_name || `Floor ${fl.floor_number}`}
+                  🏢 {fl.name || `Floor ${fl.floor_number}`}
                 </div>
               );
             })}
@@ -230,7 +242,7 @@ export default function RoomsPage() {
           ) : rooms.length === 0 ? (
             <div style={{ background: 'var(--gradient-card)', border: '1px dashed #e2e8f0', borderRadius: '12px', padding: '3rem', textAlign: 'center', color: '#060913' }}>
               <Layers size={40} color="#f59e0b" style={{ marginBottom: '1rem', opacity: 0.7 }} />
-              <p>No rooms found in <strong>{activeFloorObj?.floor_name || `Floor ${activeFloorObj?.floor_number}`}</strong>. Click "Add Room" to create one.</p>
+              <p>No rooms found in <strong>{activeFloorObj?.name || `Floor ${activeFloorObj?.floor_number}`}</strong>. Click "Add Room" to create one.</p>
             </div>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.25rem' }}>
@@ -249,7 +261,7 @@ export default function RoomsPage() {
                   {/* Explicit Floor Label on Card */}
                   <div style={{ fontSize: '0.78rem', color: '#060913', display: 'flex', alignItems: 'center', gap: '0.3rem', marginBottom: '0.5rem' }}>
                     <Tag size={13} color="#d97706" />
-                    <span>Floor: <strong>{activeFloorObj?.floor_name || `Floor ${activeFloorObj?.floor_number}`}</strong></span>
+                    <span>Floor: <strong>{activeFloorObj?.name || `Floor ${activeFloorObj?.floor_number}`}</strong></span>
                   </div>
 
                   {room.description && <p style={{ fontSize: '0.82rem', color: '#060913', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>{room.description}</p>}
@@ -263,17 +275,21 @@ export default function RoomsPage() {
           Please select a floor above to view or add rooms.
         </div>
       )}
+      </div>
 
       {/* Floor Modal */}
       {showFloorModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
-          <div className="animate-pop-in" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', width: '100%', maxWidth: '440px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setShowFloorModal(false); }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 1rem', overflowY: 'auto', overflowX: 'hidden' }}
+        >
+          <div className="animate-pop-in" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', width: '100%', maxWidth: '440px', padding: '2rem', boxShadow: '0 25px 50px rgba(0,0,0,0.7)', position: 'relative' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div>
-                <h2 style={{ fontWeight: '700', color: '#060913' }}>Add New Floor</h2>
-                <p style={{ color: '#d97706', fontSize: '0.8rem', fontWeight: '600' }}>For: {activePgObj?.name}</p>
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#060913' }}>Add New Floor</h2>
+                <p style={{ color: '#d97706', fontSize: '0.8rem', fontWeight: '600', marginTop: '0.2rem' }}>For: {activePgObj?.name}</p>
               </div>
-              <button onClick={() => setShowFloorModal(false)} style={{ background: 'transparent', color: '#060913' }}><X size={20} /></button>
+              <button onClick={() => setShowFloorModal(false)} style={{ background: 'transparent', border: 'none', color: '#060913', display: 'flex', alignItems: 'center', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             {error && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', padding: '0.65rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>{error}</div>}
             <form onSubmit={handleFloorSubmit} style={{ display: 'grid', gap: '1rem' }}>
@@ -283,11 +299,11 @@ export default function RoomsPage() {
               </div>
               <div>
                 <label style={labelStyle}>Floor Name (Optional)</label>
-                <input type="text" placeholder="e.g. 1st Floor / Executive Wing" style={inputStyle} value={floorForm.floor_name} onChange={e => setFloorForm(f => ({ ...f, floor_name: e.target.value }))} />
+                <input type="text" placeholder="e.g. 1st Floor / Executive Wing" style={inputStyle} value={floorForm.name} onChange={e => setFloorForm(f => ({ ...f, name: e.target.value }))} />
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowFloorModal(false)} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid #e2e8f0', color: '#060913', borderRadius: '8px', fontWeight: '600' }}>Cancel</button>
-                <button type="submit" disabled={submitting} style={{ flex: 1, padding: '0.7rem', background: 'linear-gradient(135deg, #ffd369 0%, #faab36 100%)', color: '#060913', borderRadius: '8px', fontWeight: '800', boxShadow: '0 6px 18px rgba(255, 211, 105, 0.35)' }}>{submitting ? 'Creating...' : 'Create Floor'}</button>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="button" onClick={() => setShowFloorModal(false)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid #e2e8f0', color: '#060913', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" disabled={submitting} style={{ flex: 1, padding: '0.75rem', background: 'linear-gradient(135deg, #ffd369 0%, #faab36 100%)', color: '#060913', border: 'none', borderRadius: '8px', fontWeight: '800', boxShadow: '0 6px 18px rgba(255, 211, 105, 0.35)', cursor: 'pointer' }}>{submitting ? 'Creating...' : 'Create Floor'}</button>
               </div>
             </form>
           </div>
@@ -296,16 +312,19 @@ export default function RoomsPage() {
 
       {/* Room Modal */}
       {showRoomModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '1rem' }}>
-          <div className="animate-pop-in" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', width: '100%', maxWidth: '450px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <div
+          onMouseDown={(e) => { if (e.target === e.currentTarget) setShowRoomModal(false); }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(8px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1.5rem 1rem', overflowY: 'auto', overflowX: 'hidden' }}
+        >
+          <div className="animate-pop-in" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', width: '100%', maxWidth: '450px', padding: '2rem', boxShadow: '0 25px 50px rgba(0,0,0,0.7)', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div>
-                <h2 style={{ fontWeight: '700', color: '#060913', fontSize: '1.25rem' }}>Add New Room</h2>
-                <div style={{ background: 'rgba(99,102,241,0.15)', color: '#d97706', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '700', display: 'inline-block', marginTop: '0.3rem' }}>
-                  Floor: {activeFloorObj?.floor_name || `Floor ${activeFloorObj?.floor_number}`} ({activePgObj?.name})
+                <h2 style={{ fontSize: '1.4rem', fontWeight: '700', color: '#060913' }}>Add New Room</h2>
+                <div style={{ background: 'rgba(217, 119, 6, 0.12)', color: '#d97706', padding: '0.2rem 0.6rem', borderRadius: '6px', fontSize: '0.78rem', fontWeight: '700', display: 'inline-block', marginTop: '0.3rem' }}>
+                  Floor: {activeFloorObj?.name || `Floor ${activeFloorObj?.floor_number}`} ({activePgObj?.name})
                 </div>
               </div>
-              <button onClick={() => setShowRoomModal(false)} style={{ background: 'transparent', color: '#060913' }}><X size={20} /></button>
+              <button onClick={() => setShowRoomModal(false)} style={{ background: 'transparent', border: 'none', color: '#060913', display: 'flex', alignItems: 'center', cursor: 'pointer' }}><X size={20} /></button>
             </div>
             {error && <div style={{ color: '#f87171', background: 'rgba(239,68,68,0.12)', border: '1px solid #ef4444', padding: '0.65rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.85rem' }}>{error}</div>}
             <form onSubmit={handleRoomSubmit} style={{ display: 'grid', gap: '1rem' }}>
@@ -327,14 +346,14 @@ export default function RoomsPage() {
                 <label style={labelStyle}>Description / Amenities</label>
                 <textarea rows={2} placeholder="e.g. Balcony view, AC Room..." style={inputStyle} value={roomForm.description} onChange={e => setRoomForm(f => ({ ...f, description: e.target.value }))} />
               </div>
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
-                <button type="button" onClick={() => setShowRoomModal(false)} style={{ flex: 1, padding: '0.7rem', background: 'transparent', border: '1px solid #e2e8f0', color: '#060913', borderRadius: '8px', fontWeight: '600' }}>Cancel</button>
-                <button type="submit" disabled={submitting} style={{ flex: 1, padding: '0.7rem', background: 'linear-gradient(135deg, #ffd369 0%, #faab36 100%)', color: '#060913', borderRadius: '8px', fontWeight: '800', boxShadow: '0 6px 18px rgba(255, 211, 105, 0.35)' }}>{submitting ? 'Creating Room' : 'Create Room'}</button>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="button" onClick={() => setShowRoomModal(false)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid #e2e8f0', color: '#060913', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
+                <button type="submit" disabled={submitting} style={{ flex: 1, padding: '0.75rem', background: 'linear-gradient(135deg, #ffd369 0%, #faab36 100%)', color: '#060913', border: 'none', borderRadius: '8px', fontWeight: '800', boxShadow: '0 6px 18px rgba(255, 211, 105, 0.35)', cursor: 'pointer' }}>{submitting ? 'Creating Room...' : 'Create Room'}</button>
               </div>
             </form>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
