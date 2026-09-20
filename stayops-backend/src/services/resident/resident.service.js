@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
-const { Resident, ResidentDocument, User, BedAllocation, Bed, Room, Floor, PG } = require('../models');
-const ApiError = require('../utils/ApiError');
-const { ROLES } = require('../constants/roles');
+const { Resident, ResidentDocument, User, BedAllocation, Bed, Room, Floor, PG } = require('../../models');
+const ApiError = require('../../utils/ApiError');
+const { ROLES } = require('../../constants/roles');
 
 const maskDocumentNumber = (docNumber) => {
   if (!docNumber) return docNumber;

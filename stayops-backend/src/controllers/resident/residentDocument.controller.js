@@ -1,6 +1,6 @@
-const asyncHandler = require('../utils/asyncHandler');
-const ApiResponse = require('../utils/ApiResponse');
-const docService = require('../services/residentDocument.service');
+const asyncHandler = require('../../utils/asyncHandler');
+const ApiResponse = require('../../utils/ApiResponse');
+const docService = require('../../services/resident/residentDocument.service');
 
 // Create Document (passes req.files to service)
 const createDocument = asyncHandler(async (req, res) => {

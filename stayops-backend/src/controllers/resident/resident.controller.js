@@ -1,6 +1,6 @@
-const asyncHandler = require('../utils/asyncHandler');
-const ApiResponse = require('../utils/ApiResponse');
-const residentService = require('../services/resident.service');
+const asyncHandler = require('../../utils/asyncHandler');
+const ApiResponse = require('../../utils/ApiResponse');
+const residentService = require('../../services/resident/resident.service');
 
 // Create Resident (with optional profile_photo and document_file upload)
 const createResident = asyncHandler(async (req, res) => {

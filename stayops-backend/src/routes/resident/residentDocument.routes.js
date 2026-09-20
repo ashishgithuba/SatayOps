@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const docController = require('../controllers/residentDocument.controller');
-const { protect, authorize } = require('../middlewares/auth.middleware');
-const { uploadDocWithProfile } = require('../middlewares/upload.middleware');
+const docController = require('../../controllers/resident/residentDocument.controller');
+const { protect, authorize } = require('../../middlewares/auth.middleware');
+const { uploadDocWithProfile } = require('../../middlewares/upload.middleware');
 const {
   validateCreateDocument,
   validateUpdateDocument,
   validateVerifyDocument,
-} = require('../validators/residentDocument.validator');
-const { ROLES } = require('../constants/roles');
+} = require('../../validators/resident/residentDocument.validator');
+const { ROLES } = require('../../constants/roles');
 
 router.use(protect);
 

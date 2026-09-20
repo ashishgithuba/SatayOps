@@ -1,4 +1,4 @@
-const ApiError = require('../utils/ApiError');
+const ApiError = require('../../utils/ApiError');
 
 const ALLOWED_DOC_TYPES = ['AADHAAR', 'PAN', 'PASSPORT', 'DRIVING_LICENSE', 'COLLEGE_ID', 'OTHER'];
 

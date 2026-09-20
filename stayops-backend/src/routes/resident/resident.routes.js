@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const residentController = require('../controllers/resident.controller');
-const { protect, authorize } = require('../middlewares/auth.middleware');
-const { uploadDocWithProfile } = require('../middlewares/upload.middleware');
-const { validateCreateResident, validateUpdateResident } = require('../validators/resident.validator');
-const { ROLES } = require('../constants/roles');
+const residentController = require('../../controllers/resident/resident.controller');
+const { protect, authorize } = require('../../middlewares/auth.middleware');
+const { uploadDocWithProfile } = require('../../middlewares/upload.middleware');
+const { validateCreateResident, validateUpdateResident } = require('../../validators/resident/resident.validator');
+const { ROLES } = require('../../constants/roles');
 
 router.use(protect);
 

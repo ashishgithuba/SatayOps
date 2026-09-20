@@ -1,5 +1,5 @@
-const { ResidentDocument, Resident, User } = require('../models');
-const ApiError = require('../utils/ApiError');
+const { ResidentDocument, Resident, User } = require('../../models');
+const ApiError = require('../../utils/ApiError');
 
 // Helper to mask sensitive document numbers (e.g. "123456789012" -> "********9012")
 const maskDocumentNumber = (docNumber) => {
