@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { allocationService, invoiceService, maintenanceService, noticeService } from '../services/api.service';
-import { useAuth } from '../context/AuthContext';
+import { allocationService, invoiceService, maintenanceService, noticeService } from '../../services/api.service';
+import { useAuth } from '../../context/AuthContext';
 import { BedDouble, Receipt, Wrench, Megaphone, CheckCircle, AlertCircle, FileText, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

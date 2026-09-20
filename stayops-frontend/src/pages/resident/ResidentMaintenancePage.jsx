@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { maintenanceService } from '../services/api.service';
-import { useAuth } from '../context/AuthContext';
+import { maintenanceService } from '../../services/api.service';
+import { useAuth } from '../../context/AuthContext';
 import { Wrench, Plus, X, CheckCircle } from 'lucide-react';
 
 const inputStyle = {

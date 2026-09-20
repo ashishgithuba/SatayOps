@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { invoiceService, paymentService } from '../services/api.service';
-import { useAuth } from '../context/AuthContext';
+import { invoiceService, paymentService } from '../../services/api.service';
+import { useAuth } from '../../context/AuthContext';
 import { Receipt, CreditCard, Upload, CheckCircle, Clock, FileText, X, AlertCircle } from 'lucide-react';
 
 export default function ResidentPaymentsPage() {

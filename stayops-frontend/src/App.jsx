@@ -12,9 +12,9 @@ import AllocationsPage from './pages/AllocationsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import MaintenancePage from './pages/MaintenancePage';
 import NoticesPage from './pages/NoticesPage';
-import ResidentDashboard from './pages/ResidentDashboard';
-import ResidentPaymentsPage from './pages/ResidentPaymentsPage';
-import ResidentMaintenancePage from './pages/ResidentMaintenancePage';
+import ResidentDashboard from './pages/resident/ResidentDashboard';
+import ResidentPaymentsPage from './pages/resident/ResidentPaymentsPage';
+import ResidentMaintenancePage from './pages/resident/ResidentMaintenancePage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
