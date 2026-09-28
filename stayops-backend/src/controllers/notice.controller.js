@@ -17,8 +17,8 @@ const getNotices = asyncHandler(async (req, res) => {
     query.resident_id = resident.id;
   }
   
-  const notices = await noticeService.getNotices(query);
-  res.status(200).json(new ApiResponse(200, notices, 'Notices fetched successfully'));
+  const result = await noticeService.getNotices(query);
+  res.status(200).json(new ApiResponse(200, result.data, 'Notices fetched successfully', result.pagination));
 });
 
 const updateNoticeStatus = asyncHandler(async (req, res) => {

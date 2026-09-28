@@ -5,6 +5,9 @@ const { sequelize } = require('../config/database');
 // Generate invoices for active allocations for a given billing month
 const generateInvoicesForMonth = async (ownerId, billingMonth) => {
   const effMonth = billingMonth || new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  
+  const [monthName, year] = effMonth.split(' ');
+  const billingDate = new Date(`${monthName} 1, ${year}`);
 
   // Get all active allocations belonging to owner's PGs
   const activeAllocations = await BedAllocation.findAll({
@@ -15,6 +18,13 @@ const generateInvoicesForMonth = async (ownerId, billingMonth) => {
   const generatedInvoices = [];
 
   for (const alloc of activeAllocations) {
+    // Skip if resident checked in after the billing month
+    const checkInDate = new Date(alloc.check_in_date || alloc.created_at);
+    if (checkInDate.getFullYear() > billingDate.getFullYear() || 
+       (checkInDate.getFullYear() === billingDate.getFullYear() && checkInDate.getMonth() > billingDate.getMonth())) {
+      continue;
+    }
+
     // Check if invoice already exists for this allocation & month
     const existing = await RentInvoice.findOne({
       where: {

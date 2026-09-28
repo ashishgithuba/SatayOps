@@ -43,7 +43,7 @@ const createRequest = async (data, userId) => {
 };
 
 const getRequests = async (filters) => {
-  const { pg_id, resident_id, status, priority, category } = filters;
+  const { pg_id, resident_id, status, priority, category, page = 1, limit = 100 } = filters;
   const where = {};
 
   if (pg_id) where.pg_id = pg_id;
@@ -52,7 +52,11 @@ const getRequests = async (filters) => {
   if (priority) where.priority = priority;
   if (category) where.category = category;
 
-  return await MaintenanceRequest.findAll({
+  const pageNumber = parseInt(page, 10);
+  const pageSize = parseInt(limit, 10);
+  const offset = (pageNumber - 1) * pageSize;
+
+  const { count, rows } = await MaintenanceRequest.findAndCountAll({
     where,
     include: [
       {
@@ -67,7 +71,19 @@ const getRequests = async (filters) => {
       },
     ],
     order: [['created_at', 'DESC']],
+    limit: pageSize,
+    offset: offset,
   });
+
+  return {
+    data: rows,
+    pagination: {
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      currentPage: pageNumber,
+      pageSize,
+    },
+  };
 };
 
 const getRequestById = async (id) => {

@@ -10,8 +10,9 @@ const allocateBed = asyncHandler(async (req, res) => {
 
 // Get All Allocations (GET /allocations)
 const getAllocations = asyncHandler(async (req, res) => {
-  const allocations = await allocService.getAllocations(req.user.id, req.query);
-  res.status(200).json(new ApiResponse(200, allocations, 'Bed allocations fetched successfully'));
+  const result = await allocService.getAllocations(req.user.id, req.query);
+  // result contains { data, pagination }
+  res.status(200).json(new ApiResponse(200, result.data, 'Bed allocations fetched successfully', result.pagination));
 });
 
 // Get Single Allocation (GET /allocations/:id)

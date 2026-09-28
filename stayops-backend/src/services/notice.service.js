@@ -86,14 +86,18 @@ const assignRecipients = async (notice, targetIds, transaction) => {
 };
 
 const getNotices = async (filters) => {
-  const { pg_id, status, type } = filters;
+  const { pg_id, status, type, page = 1, limit = 100 } = filters;
   const where = {};
   
   if (pg_id) where.pg_id = pg_id;
   if (status) where.status = status;
   if (type) where.type = type;
 
-  return await Notice.findAll({
+  const pageNumber = parseInt(page, 10);
+  const pageSize = parseInt(limit, 10);
+  const offset = (pageNumber - 1) * pageSize;
+
+  const { count, rows } = await Notice.findAndCountAll({
     where,
     include: [
       {
@@ -103,7 +107,19 @@ const getNotices = async (filters) => {
       },
     ],
     order: [['created_at', 'DESC']],
+    limit: pageSize,
+    offset: offset,
   });
+
+  return {
+    data: rows,
+    pagination: {
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      currentPage: pageNumber,
+      pageSize,
+    },
+  };
 };
 
 const updateNoticeStatus = async (id, status, targetIds, userId) => {

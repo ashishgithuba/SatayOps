@@ -46,14 +46,14 @@ const getPayments = asyncHandler(async (req, res) => {
     query.resident_id = resident.id; // Force filter
   }
 
-  const payments = await paymentService.getPayments(req.user.id, query);
-  res.status(200).json(new ApiResponse(200, payments, 'Payments fetched successfully'));
+  const result = await paymentService.getPayments(req.user.id, query);
+  res.status(200).json(new ApiResponse(200, result.data, 'Payments fetched successfully', result.pagination));
 });
 
 // Get all PENDING_VERIFICATION requests (owner's approval queue)
 const getPendingRequests = asyncHandler(async (req, res) => {
-  const requests = await paymentService.getPendingRequests(req.user.id);
-  res.status(200).json(new ApiResponse(200, requests, 'Pending payment requests fetched'));
+  const result = await paymentService.getPendingRequests(req.user.id, req.query);
+  res.status(200).json(new ApiResponse(200, result.data, 'Pending payment requests fetched', result.pagination));
 });
 
 module.exports = {

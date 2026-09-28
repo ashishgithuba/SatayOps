@@ -1,4 +1,4 @@
-const { Room, Floor, PG } = require('../models');
+const { Room, Floor, PG, Bed, BedAllocation, Resident } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 const createRoom = async (roomData, ownerId) => {
@@ -39,6 +39,26 @@ const createRoom = async (roomData, ownerId) => {
   return room;
 };
 
+// Reusable bed include definition with active resident allocations
+const bedIncludeWithResident = {
+  model: Bed,
+  as: 'beds',
+  include: [
+    {
+      model: BedAllocation,
+      as: 'allocations',
+      where: { status: 'ACTIVE' },
+      required: false,
+      include: [
+        {
+          model: Resident,
+          as: 'resident',
+        },
+      ],
+    },
+  ],
+};
+
 // Get all rooms of a PG (or auto-detect owner PG)
 const getRoomsByPg = async (ownerId, pg_id, options = {}) => {
   let targetPgId = pg_id;
@@ -59,8 +79,12 @@ const getRoomsByPg = async (ownerId, pg_id, options = {}) => {
     where: { pg_id: targetPgId },
     include: [
       { model: Floor, as: 'floor', attributes: ['id', 'floor_number', 'name'] },
+      bedIncludeWithResident,
     ],
-    order: [['room_number', 'ASC']],
+    order: [
+      ['room_number', 'ASC'],
+      [{ model: Bed, as: 'beds' }, 'bed_number', 'ASC'],
+    ],
   };
 
   if (isPaginated) {
@@ -96,8 +120,12 @@ const getRoomsByFloor = async (floor_id, options = {}) => {
     where: { floor_id },
     include: [
       { model: Floor, as: 'floor', attributes: ['id', 'floor_number', 'name'] },
+      bedIncludeWithResident,
     ],
-    order: [['room_number', 'ASC']],
+    order: [
+      ['room_number', 'ASC'],
+      [{ model: Bed, as: 'beds' }, 'bed_number', 'ASC'],
+    ],
   };
 
   if (isPaginated) {
@@ -124,7 +152,9 @@ const getRoomById = async (id) => {
     include: [
       { model: PG, as: 'pg', attributes: ['id', 'name'] },
       { model: Floor, as: 'floor', attributes: ['id', 'floor_number', 'name'] },
+      bedIncludeWithResident,
     ],
+    order: [[{ model: Bed, as: 'beds' }, 'bed_number', 'ASC']],
   });
 
   if (!room) {

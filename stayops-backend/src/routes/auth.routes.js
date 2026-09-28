@@ -24,7 +24,10 @@ router.post(
 router.get('/profile', protect, authController.getProfile);
 router.patch('/profile', protect, validateUpdateUser, authController.updateProfile);
 
-// 5. Forgot & Reset Password (Public)
+// 5. Change Password (Protected - logged in user)
+router.post('/change-password', protect, authController.changePassword);
+
+// 6. Forgot & Reset Password (Public)
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
 

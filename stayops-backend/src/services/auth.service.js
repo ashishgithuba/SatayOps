@@ -156,7 +156,30 @@ const updateUserProfile = async (userId, updateData) => {
   };
 };
 
+const forgotPasswordLimiter = new Map();
+
 const forgotPassword = async (email) => {
+  const now = Date.now();
+  let limitData = forgotPasswordLimiter.get(email) || { count: 0, lockedUntil: null, firstRequestAt: now };
+
+  if (limitData.lockedUntil && now < limitData.lockedUntil) {
+    const waitMinutes = Math.ceil((limitData.lockedUntil - now) / 60000);
+    throw new ApiError(429, `Too many requests. Please try again after ${waitMinutes} minutes.`);
+  }
+
+  // Reset if lock expired or first request was more than 10 mins ago
+  if ((limitData.lockedUntil && now >= limitData.lockedUntil) || (now - limitData.firstRequestAt > 10 * 60 * 1000)) {
+    limitData = { count: 0, lockedUntil: null, firstRequestAt: now };
+  }
+
+  limitData.count += 1;
+  
+  if (limitData.count >= 2) {
+    limitData.lockedUntil = now + 10 * 60 * 1000;
+  }
+  
+  forgotPasswordLimiter.set(email, limitData);
+
   const user = await User.findOne({ where: { email } });
   if (!user) {
     // Security: Don't reveal if email exists or not
@@ -214,12 +237,35 @@ const resetPassword = async (token, newPassword) => {
   return { message: 'Password has been reset successfully' };
 };
 
+const changePassword = async (userId, currentPassword, newPassword) => {
+  const user = await User.findByPk(userId);
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const isMatch = await user.matchPassword(currentPassword);
+  if (!isMatch) {
+    throw new ApiError(400, 'Current password is incorrect');
+  }
+
+  if (newPassword.length < 6) {
+    throw new ApiError(400, 'New password must be at least 6 characters');
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  user.password_hash = await bcrypt.hash(newPassword, salt);
+  await user.save();
+
+  return { message: 'Password changed successfully' };
+};
+
 module.exports = {
   createSuperAdminUser,
   createOwnerBySuperAdmin,
   loginUser,
   getUserProfile,
   updateUserProfile,
+  changePassword,
   forgotPassword,
   resetPassword,
 };

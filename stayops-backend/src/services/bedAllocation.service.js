@@ -81,7 +81,7 @@ const allocateBed = async (allocationData, ownerId) => {
 
 // Get All Allocations of PG Owner
 const getAllocations = async (ownerId, query = {}) => {
-  const { status, resident_id, pg_id } = query;
+  const { status, resident_id, pg_id, page = 1, limit = 100 } = query;
   const whereClause = {};
 
   if (status) whereClause.status = status;
@@ -94,7 +94,11 @@ const getAllocations = async (ownerId, query = {}) => {
   }
   if (targetPgId) whereClause.pg_id = targetPgId;
 
-  return await BedAllocation.findAll({
+  const pageNumber = parseInt(page, 10);
+  const pageSize = parseInt(limit, 10);
+  const offset = (pageNumber - 1) * pageSize;
+
+  const { count, rows } = await BedAllocation.findAndCountAll({
     where: whereClause,
     include: [
       { model: Resident, as: 'resident', attributes: ['id', 'full_name', 'phone', 'email', 'profile_photo_url'] },
@@ -103,7 +107,19 @@ const getAllocations = async (ownerId, query = {}) => {
       { model: PG, as: 'pg', attributes: ['id', 'name'] },
     ],
     order: [['created_at', 'DESC']],
+    limit: pageSize,
+    offset: offset,
   });
+
+  return {
+    data: rows,
+    pagination: {
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      currentPage: pageNumber,
+      pageSize,
+    },
+  };
 };
 
 // Get Single Allocation Detail by ID

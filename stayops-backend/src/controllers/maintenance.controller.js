@@ -40,8 +40,8 @@ const getRequests = asyncHandler(async (req, res) => {
     query.pg_id = pgIds;
   }
   
-  const requests = await maintenanceService.getRequests(query);
-  res.status(200).json(new ApiResponse(200, requests, 'Maintenance requests fetched successfully'));
+  const result = await maintenanceService.getRequests(query);
+  res.status(200).json(new ApiResponse(200, result.data, 'Maintenance requests fetched successfully', result.pagination));
 });
 
 const getRequestById = asyncHandler(async (req, res) => {

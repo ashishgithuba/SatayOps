@@ -117,32 +117,65 @@ const rejectPaymentRequest = async (paymentId, rejection_reason) => {
 
 // Get all payments (with optional filters)
 const getPayments = async (ownerId, query = {}) => {
-  const { invoice_id, resident_id, status } = query;
+  const { invoice_id, resident_id, status, page = 1, limit = 100 } = query;
   const whereClause = {};
   if (invoice_id) whereClause.invoice_id = invoice_id;
   if (resident_id) whereClause.resident_id = resident_id;
   if (status) whereClause.status = status;
 
-  return await Payment.findAll({
+  const pageNumber = parseInt(page, 10);
+  const pageSize = parseInt(limit, 10);
+  const offset = (pageNumber - 1) * pageSize;
+
+  const { count, rows } = await Payment.findAndCountAll({
     where: whereClause,
     include: [
       { model: Resident, as: 'resident', attributes: ['id', 'full_name', 'phone', 'email'] },
       { model: RentInvoice, as: 'invoice', attributes: ['id', 'invoice_number', 'billing_month', 'total_amount', 'amount_paid', 'status'] },
     ],
     order: [['created_at', 'DESC']],
+    limit: pageSize,
+    offset: offset,
   });
+
+  return {
+    data: rows,
+    pagination: {
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      currentPage: pageNumber,
+      pageSize,
+    },
+  };
 };
 
 // Get only PENDING_VERIFICATION requests (for owner's approval queue)
-const getPendingRequests = async (ownerId) => {
-  return await Payment.findAll({
+const getPendingRequests = async (ownerId, query = {}) => {
+  const { page = 1, limit = 100 } = query;
+  const pageNumber = parseInt(page, 10);
+  const pageSize = parseInt(limit, 10);
+  const offset = (pageNumber - 1) * pageSize;
+
+  const { count, rows } = await Payment.findAndCountAll({
     where: { status: 'PENDING_VERIFICATION' },
     include: [
       { model: Resident, as: 'resident', attributes: ['id', 'full_name', 'phone', 'email'] },
       { model: RentInvoice, as: 'invoice', attributes: ['id', 'invoice_number', 'billing_month', 'total_amount', 'amount_paid', 'status'] },
     ],
     order: [['created_at', 'DESC']],
+    limit: pageSize,
+    offset: offset,
   });
+
+  return {
+    data: rows,
+    pagination: {
+      totalItems: count,
+      totalPages: Math.ceil(count / pageSize),
+      currentPage: pageNumber,
+      pageSize,
+    },
+  };
 };
 
 module.exports = {
