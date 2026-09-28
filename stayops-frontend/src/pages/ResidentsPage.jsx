@@ -26,7 +26,8 @@ const getImageUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-  return `http://localhost:5000${cleanUrl}`;
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+  return `${baseUrl}${cleanUrl}`;
 };
 
 export default function ResidentsPage() {
