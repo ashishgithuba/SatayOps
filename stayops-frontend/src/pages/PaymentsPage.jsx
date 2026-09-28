@@ -5,6 +5,7 @@ import {
   Calendar, Search, Clock, CheckCheck, AlertCircle, ShieldCheck,
   XCircle, Bell
 } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const inputStyle = {
   width: '100%',
@@ -30,7 +31,13 @@ export default function PaymentsPage() {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('ALL');
+  const currentYearMonthStr = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  const [selectedMonthFilter, setSelectedMonthFilter] = useState(currentYearMonthStr);
   const [mainView, setMainView] = useState('INVOICES'); // INVOICES | REQUESTS
+  
+  const [invoicesPage, setInvoicesPage] = useState(1);
+  const [requestsPage, setRequestsPage] = useState(1);
+  const [requestsPagination, setRequestsPagination] = useState(null);
 
   const [showDirectPayModal, setShowDirectPayModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -61,19 +68,19 @@ export default function PaymentsPage() {
     remarks: '',
   });
 
-  const [generateMonth, setGenerateMonth] = useState(
-    new Date().toLocaleString('default', { month: 'long', year: 'numeric' })
-  );
+  const currentYearMonth = new Date().toISOString().slice(0, 7);
+  const [generateMonth, setGenerateMonth] = useState(currentYearMonth);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [invRes, pendingRes] = await Promise.all([
         invoiceService.getInvoices(),
-        paymentService.getPendingRequests(),
+        paymentService.getPendingRequests({ page: requestsPage, limit: 10 }),
       ]);
       setInvoices(invRes.data || []);
       setPendingRequests(pendingRes.data || []);
+      setRequestsPagination(pendingRes.pagination || null);
     } catch (err) {
       console.error(err);
     } finally {
@@ -81,7 +88,7 @@ export default function PaymentsPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [requestsPage]);
 
   const showSuccess = (msg) => {
     setSuccessMsg(msg);
@@ -171,8 +178,13 @@ export default function PaymentsPage() {
     setError('');
     setSubmitting(true);
     try {
-      await invoiceService.generateInvoices({ billing_month: generateMonth });
-      showSuccess(`📄 Bills generated for ${generateMonth}!`);
+      const [year, monthNum] = generateMonth.split('-');
+      const date = new Date(year, monthNum - 1);
+      const formattedMonth = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+      await invoiceService.generateInvoices({ billing_month: formattedMonth });
+      showSuccess(`📄 Bills generated for ${formattedMonth}!`);
+      setSelectedMonthFilter(formattedMonth);
       setShowGenerateModal(false);
       fetchData();
     } catch (err) {
@@ -198,7 +210,15 @@ export default function PaymentsPage() {
     setShowRequestModal(true);
   };
 
-  const filteredInvoices = invoices.filter((inv) => {
+  const uniqueMonthsSet = new Set(invoices.map(inv => inv.billing_month).filter(Boolean));
+  uniqueMonthsSet.add(selectedMonthFilter);
+  const uniqueMonths = [...uniqueMonthsSet];
+
+  const monthFilteredInvoices = invoices.filter(i => i.billing_month === selectedMonthFilter);
+
+  const monthFilteredRequests = pendingRequests.filter(req => req.invoice?.billing_month === selectedMonthFilter);
+
+  const filteredInvoices = monthFilteredInvoices.filter((inv) => {
     const matchesTab = activeTab === 'ALL' || inv.status === activeTab;
     const resName = (inv.resident?.full_name || '').toLowerCase();
     const resPhone = (inv.resident?.phone || '').toLowerCase();
@@ -208,8 +228,17 @@ export default function PaymentsPage() {
     return matchesTab && matchesSearch;
   });
 
-  const totalBilled = invoices.reduce((s, i) => s + Number(i.total_amount || 0), 0);
-  const totalCollected = invoices.reduce((s, i) => s + Number(i.amount_paid || 0), 0);
+  const invoicesLimit = 10;
+  const paginatedInvoices = filteredInvoices.slice((invoicesPage - 1) * invoicesLimit, invoicesPage * invoicesLimit);
+  const invoicesPaginationData = {
+    currentPage: invoicesPage,
+    totalPages: Math.ceil(filteredInvoices.length / invoicesLimit),
+    totalItems: filteredInvoices.length,
+    pageSize: invoicesLimit,
+  };
+
+  const totalBilled = monthFilteredInvoices.reduce((s, i) => s + Number(i.total_amount || 0), 0);
+  const totalCollected = monthFilteredInvoices.reduce((s, i) => s + Number(i.amount_paid || 0), 0);
   const totalPending = totalBilled - totalCollected;
 
   return (
@@ -222,9 +251,9 @@ export default function PaymentsPage() {
             <h1 style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: '800', color: '#060913' }}>Rent Billing & Payments</h1>
             <p style={{ color: '#64748b', fontSize: '0.9rem', marginTop: '0.2rem' }}>Track who paid, who is due, and verify resident payment claims.</p>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <button onClick={() => setShowGenerateModal(true)} style={{ background: '#fff', border: '1px solid #e2e8f0', color: '#060913', padding: '0.75rem 1.25rem', borderRadius: '10px', fontWeight: '700', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', cursor: 'pointer' }}>
-              <Calendar size={17} color="#d97706" /> Generate Monthly Bills
+          <div>
+            <button onClick={() => setShowGenerateModal(true)} style={{ background: '#060913', color: '#ffd369', padding: '0.85rem 1.5rem', borderRadius: '10px', fontWeight: '800', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
+              <Plus size={18} /> Create New Bills
             </button>
           </div>
         </div>
@@ -235,26 +264,41 @@ export default function PaymentsPage() {
           </div>
         )}
 
+        {/* Filter Section for Stats */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+           <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#060913' }}>Summary Overview:</h3>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '0.25rem 0.75rem' }}>
+             <Calendar size={15} color="#64748b" />
+             <select 
+                value={selectedMonthFilter} 
+                onChange={(e) => setSelectedMonthFilter(e.target.value)}
+                style={{ padding: '0.4rem', border: 'none', fontSize: '0.9rem', fontWeight: '700', color: '#0f172a', outline: 'none', background: 'transparent', cursor: 'pointer' }}
+              >
+                {uniqueMonths.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+           </div>
+        </div>
+
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
           <div style={{ background: 'var(--gradient-card)', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem' }}>
             <div style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Total Billed</div>
             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: '#060913', marginTop: '0.3rem' }}>₹{totalBilled.toLocaleString()}</div>
-            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.2rem' }}>{invoices.length} invoices</div>
+            <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.2rem' }}>{monthFilteredInvoices.length} invoices</div>
           </div>
           <div style={{ background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: '14px', padding: '1.25rem' }}>
             <div style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: '700', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><CheckCheck size={14} /> Collected</div>
             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: '#10b981', marginTop: '0.3rem' }}>₹{totalCollected.toLocaleString()}</div>
-            <div style={{ fontSize: '0.78rem', color: '#10b981', marginTop: '0.2rem' }}>{invoices.filter(i => i.status === 'PAID').length} fully paid</div>
+            <div style={{ fontSize: '0.78rem', color: '#10b981', marginTop: '0.2rem' }}>{monthFilteredInvoices.filter(i => i.status === 'PAID').length} fully paid</div>
           </div>
           <div style={{ background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: '14px', padding: '1.25rem' }}>
             <div style={{ fontSize: '0.78rem', color: '#ef4444', fontWeight: '700', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Clock size={14} /> Due / Pending</div>
             <div style={{ fontSize: '1.6rem', fontWeight: '800', color: '#ef4444', marginTop: '0.3rem' }}>₹{totalPending.toLocaleString()}</div>
-            <div style={{ fontSize: '0.78rem', color: '#ef4444', marginTop: '0.2rem' }}>{invoices.filter(i => i.status !== 'PAID').length} unpaid</div>
+            <div style={{ fontSize: '0.78rem', color: '#ef4444', marginTop: '0.2rem' }}>{monthFilteredInvoices.filter(i => i.status !== 'PAID').length} unpaid</div>
           </div>
-          <div style={{ background: pendingRequests.length > 0 ? 'rgba(245,158,11,0.1)' : 'var(--gradient-card)', border: pendingRequests.length > 0 ? '1px solid rgba(245,158,11,0.35)' : '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', cursor: 'pointer' }} onClick={() => setMainView('REQUESTS')}>
+          <div style={{ background: monthFilteredRequests.length > 0 ? 'rgba(245,158,11,0.1)' : 'var(--gradient-card)', border: monthFilteredRequests.length > 0 ? '1px solid rgba(245,158,11,0.35)' : '1px solid #e2e8f0', borderRadius: '14px', padding: '1.25rem', cursor: 'pointer' }} onClick={() => setMainView('REQUESTS')}>
             <div style={{ fontSize: '0.78rem', color: '#d97706', fontWeight: '700', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem' }}><Bell size={14} /> Pending Verification</div>
-            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: pendingRequests.length > 0 ? '#d97706' : '#94a3b8', marginTop: '0.3rem' }}>{pendingRequests.length}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: '800', color: monthFilteredRequests.length > 0 ? '#d97706' : '#94a3b8', marginTop: '0.3rem' }}>{monthFilteredRequests.length}</div>
             <div style={{ fontSize: '0.78rem', color: '#d97706', marginTop: '0.2rem' }}>Tap to review requests</div>
           </div>
         </div>
@@ -266,7 +310,7 @@ export default function PaymentsPage() {
           </button>
           <button onClick={() => setMainView('REQUESTS')} style={{ padding: '0.6rem 1.2rem', borderRadius: '10px', fontWeight: '700', fontSize: '0.9rem', border: 'none', background: mainView === 'REQUESTS' ? '#060913' : 'transparent', color: mainView === 'REQUESTS' ? '#ffd369' : '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             ⏳ Verify Requests
-            {pendingRequests.length > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50px', padding: '0.05rem 0.5rem', fontSize: '0.75rem', fontWeight: '800' }}>{pendingRequests.length}</span>}
+            {monthFilteredRequests.length > 0 && <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50px', padding: '0.05rem 0.5rem', fontSize: '0.75rem', fontWeight: '800' }}>{monthFilteredRequests.length}</span>}
           </button>
         </div>
 
@@ -279,9 +323,9 @@ export default function PaymentsPage() {
                 <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none' }} />
                 <input type="text" placeholder="Search by resident name, phone, room..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '0.6rem 0.85rem 0.6rem 2.2rem', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#060913', fontSize: '0.88rem', outline: 'none', boxSizing: 'border-box' }} />
               </div>
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 {['ALL', 'UNPAID', 'PARTIAL', 'PAID'].map((tab) => {
-                  const count = tab === 'ALL' ? invoices.length : invoices.filter(i => i.status === tab).length;
+                  const count = tab === 'ALL' ? monthFilteredInvoices.length : monthFilteredInvoices.filter(i => i.status === tab).length;
                   const clr = tab === 'PAID' ? '#10b981' : tab === 'PARTIAL' ? '#f59e0b' : tab === 'UNPAID' ? '#ef4444' : '#475569';
                   return (
                     <button key={tab} onClick={() => setActiveTab(tab)} style={{ padding: '0.5rem 0.9rem', borderRadius: '8px', fontWeight: '700', fontSize: '0.82rem', border: activeTab === tab ? `1.5px solid ${clr}` : '1px solid #e2e8f0', background: activeTab === tab ? (tab === 'ALL' ? '#060913' : `rgba(${tab === 'PAID' ? '16,185,129' : tab === 'PARTIAL' ? '245,158,11' : '239,68,68'},0.1)`) : '#fff', color: activeTab === tab ? (tab === 'ALL' ? '#ffd369' : clr) : '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -300,62 +344,81 @@ export default function PaymentsPage() {
               <div style={{ background: 'var(--gradient-card)', border: '1px dashed #e2e8f0', borderRadius: '16px', padding: '4rem 2rem', textAlign: 'center' }}>
                 <CreditCard size={48} color="#f59e0b" style={{ marginBottom: '1rem', opacity: 0.8 }} />
                 <h3 style={{ fontSize: '1.2rem', color: '#060913', marginBottom: '0.5rem' }}>No Rent Invoices Found</h3>
-                <p style={{ fontSize: '0.9rem', color: '#64748b' }}>Click "Generate Monthly Bills" to auto-create bills for all active residents.</p>
+                <p style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                  No invoices available for {selectedMonthFilter}. Click "Create New Bills" to generate them.
+                </p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {filteredInvoices.map((inv) => {
-                  const resName = inv.resident?.full_name || 'Resident';
-                  const resPhone = inv.resident?.phone || '';
-                  const pgName = inv.allocation?.pg?.name || 'PG';
-                  const roomNo = inv.allocation?.room?.room_number || 'N/A';
-                  const bedNo = inv.allocation?.bed?.bed_number || 'N/A';
-                  const due = Number(inv.total_amount) - Number(inv.amount_paid);
-                  return (
-                    <div key={inv.id} className="card-animated" style={{ background: 'var(--gradient-card)', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1.4rem', boxShadow: '0 4px 14px rgba(0,0,0,0.06)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                        <div>
-                          <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#060913' }}>{resName}</h3>
-                          <div style={{ fontSize: '0.79rem', color: '#64748b' }}>{resPhone && `📱 ${resPhone}`}</div>
-                          <div style={{ fontSize: '0.79rem', color: '#64748b' }}>{pgName} • Room {roomNo} • Bed {bedNo}</div>
-                        </div>
-                        <span style={{ fontSize: '0.73rem', fontWeight: '700', padding: '0.25rem 0.65rem', borderRadius: '6px', color: inv.status === 'PAID' ? '#10b981' : inv.status === 'PARTIAL' ? '#f59e0b' : '#ef4444', background: inv.status === 'PAID' ? 'rgba(16,185,129,0.12)' : inv.status === 'PARTIAL' ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)' }}>{inv.status}</span>
-                      </div>
-
-                      <div style={{ background: '#f8fafc', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #e2e8f0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: '#64748b', marginBottom: '0.4rem' }}>
-                          <span>Month: <strong>{inv.billing_month}</strong></span>
-                          <span>{inv.invoice_number}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.96rem', fontWeight: '800', color: '#060913' }}>
-                          <span>Rent Bill:</span><span>₹{Number(inv.total_amount).toLocaleString()}</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: '700', color: '#10b981', marginTop: '0.2rem' }}>
-                          <span>Paid:</span><span>₹{Number(inv.amount_paid).toLocaleString()}</span>
-                        </div>
-                        {due > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: '800', color: '#ef4444', marginTop: '0.2rem' }}>
-                          <span>Due:</span><span>₹{due.toLocaleString()}</span>
-                        </div>}
-                      </div>
-
-                      {inv.status !== 'PAID' && (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                          <button onClick={() => openDirectPayModal(inv)} style={{ padding: '0.55rem', background: 'linear-gradient(135deg, #ffd369, #faab36)', color: '#060913', border: 'none', borderRadius: '8px', fontWeight: '800', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                            <DollarSign size={14} /> Mark as Paid
-                          </button>
-                          <button onClick={() => openRequestModal(inv)} style={{ padding: '0.55rem', background: 'rgba(245,158,11,0.12)', color: '#d97706', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                            <Clock size={14} /> Pending Verify
-                          </button>
-                        </div>
-                      )}
-                      {inv.status === 'PAID' && (
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: '#10b981', fontWeight: '700', fontSize: '0.85rem', padding: '0.5rem', background: 'rgba(16,185,129,0.08)', borderRadius: '8px' }}>
-                          <CheckCheck size={16} /> Fully Paid
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflowX: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                  <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <tr>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Resident Info</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Invoice Info</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Amount</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Status</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedInvoices.map((inv) => {
+                      const resName = inv.resident?.full_name || 'Resident';
+                      const resPhone = inv.resident?.phone || '';
+                      const pgName = inv.allocation?.pg?.name || 'PG';
+                      const roomNo = inv.allocation?.room?.room_number || 'N/A';
+                      const bedNo = inv.allocation?.bed?.bed_number || 'N/A';
+                      const due = Number(inv.total_amount) - Number(inv.amount_paid);
+                      return (
+                        <tr key={inv.id} style={{ borderBottom: '1px solid #e2e8f0', transition: 'background 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                          <td style={{ padding: '1rem 1.25rem' }}>
+                            <div style={{ fontWeight: '700', color: '#0f172a' }}>{resName}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{resPhone && `📱 ${resPhone}`}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.2rem' }}>{pgName} • Rm {roomNo} • Bed {bedNo}</div>
+                          </td>
+                          <td style={{ padding: '1rem 1.25rem' }}>
+                            <div style={{ fontWeight: '600', color: '#0f172a' }}>{inv.invoice_number}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{inv.billing_month}</div>
+                          </td>
+                          <td style={{ padding: '1rem 1.25rem' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                              <div style={{ fontSize: '0.9rem', fontWeight: '700', color: '#060913' }}>Total: ₹{Number(inv.total_amount).toLocaleString()}</div>
+                              <div style={{ fontSize: '0.8rem', fontWeight: '600', color: '#10b981' }}>Paid: ₹{Number(inv.amount_paid).toLocaleString()}</div>
+                              {due > 0 && <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#ef4444' }}>Due: ₹{due.toLocaleString()}</div>}
+                            </div>
+                          </td>
+                          <td style={{ padding: '1rem 1.25rem' }}>
+                            <span style={{ fontSize: '0.73rem', fontWeight: '700', padding: '0.35rem 0.65rem', borderRadius: '6px', color: inv.status === 'PAID' ? '#10b981' : inv.status === 'PARTIAL' ? '#f59e0b' : '#ef4444', background: inv.status === 'PAID' ? 'rgba(16,185,129,0.12)' : inv.status === 'PARTIAL' ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)' }}>{inv.status}</span>
+                          </td>
+                          <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                              {inv.status !== 'PAID' && (
+                                <>
+                                  <button onClick={() => openDirectPayModal(inv)} style={{ padding: '0.45rem 0.65rem', background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a', borderRadius: '6px', fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <DollarSign size={14} /> Pay
+                                  </button>
+                                  <button onClick={() => openRequestModal(inv)} style={{ padding: '0.45rem 0.65rem', background: 'rgba(245,158,11,0.12)', color: '#d97706', border: '1px solid rgba(245,158,11,0.3)', borderRadius: '6px', fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                                    <Clock size={14} /> Verify
+                                  </button>
+                                </>
+                              )}
+                              {inv.status === 'PAID' && (
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: '#10b981', fontWeight: '700', fontSize: '0.8rem', padding: '0.4rem 0.6rem', background: 'rgba(16,185,129,0.08)', borderRadius: '6px' }}>
+                                  <CheckCheck size={15} /> Fully Paid
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            {filteredInvoices.length > 0 && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <Pagination pagination={invoicesPaginationData} onPageChange={setInvoicesPage} />
               </div>
             )}
           </>
@@ -380,35 +443,56 @@ export default function PaymentsPage() {
                 <p style={{ fontSize: '0.9rem', color: '#64748b' }}>No pending payment verifications. All requests are processed.</p>
               </div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                {pendingRequests.map((req) => (
-                  <div key={req.id} className="card-animated" style={{ background: 'rgba(245,158,11,0.05)', border: '1.5px solid rgba(245,158,11,0.3)', borderRadius: '14px', padding: '1.4rem', boxShadow: '0 4px 14px rgba(0,0,0,0.06)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                      <div>
-                        <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#060913' }}>{req.resident?.full_name || 'Resident'}</h3>
-                        <div style={{ fontSize: '0.79rem', color: '#64748b' }}>📱 {req.resident?.phone || 'N/A'}</div>
-                      </div>
-                      <span style={{ fontSize: '0.73rem', fontWeight: '700', padding: '0.25rem 0.65rem', borderRadius: '6px', color: '#d97706', background: 'rgba(245,158,11,0.15)' }}>⏳ PENDING</span>
-                    </div>
-
-                    <div style={{ background: '#fffbeb', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid rgba(245,158,11,0.2)' }}>
-                      <div style={{ fontSize: '0.78rem', color: '#92400e', marginBottom: '0.3rem' }}>Invoice: <strong>{req.invoice?.invoice_number}</strong> — {req.invoice?.billing_month}</div>
-                      <div style={{ fontSize: '1rem', fontWeight: '800', color: '#060913' }}>Claimed Amount: ₹{Number(req.amount).toLocaleString()}</div>
-                      <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '0.3rem' }}>Method: {req.payment_method}</div>
-                      {req.transaction_reference && <div style={{ fontSize: '0.82rem', color: '#64748b' }}>Ref: {req.transaction_reference}</div>}
-                      {req.remarks && <div style={{ fontSize: '0.8rem', color: '#64748b', fontStyle: 'italic', marginTop: '0.25rem' }}>Note: {req.remarks}</div>}
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                      <button onClick={() => handleApprove(req.id)} disabled={submitting} style={{ padding: '0.6rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '800', fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                        <CheckCircle2 size={15} /> Approve
-                      </button>
-                      <button onClick={() => { setSelectedRequest(req); setShowRejectModal(true); }} style={{ padding: '0.6rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '8px', fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
-                        <XCircle size={15} /> Reject
-                      </button>
-                    </div>
-                  </div>
-                ))}
+              <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflowX: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+                  <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                    <tr>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Resident Info</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Claimed Amount</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Payment Method</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Notes</th>
+                      <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {monthFilteredRequests.map((req) => (
+                      <tr key={req.id} style={{ borderBottom: '1px solid #e2e8f0', transition: 'background 0.2s', background: 'rgba(245,158,11,0.02)' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(245,158,11,0.02)'}>
+                        <td style={{ padding: '1rem 1.25rem' }}>
+                          <div style={{ fontWeight: '700', color: '#0f172a' }}>{req.resident?.full_name || 'Resident'}</div>
+                          <div style={{ fontSize: '0.85rem', color: '#64748b' }}>📱 {req.resident?.phone || 'N/A'}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#92400e', marginTop: '0.3rem', fontWeight: '600' }}>Inv: {req.invoice?.invoice_number} ({req.invoice?.billing_month})</div>
+                        </td>
+                        <td style={{ padding: '1rem 1.25rem' }}>
+                          <div style={{ fontSize: '0.95rem', fontWeight: '800', color: '#060913' }}>₹{Number(req.amount).toLocaleString()}</div>
+                          <span style={{ fontSize: '0.7rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '4px', color: '#d97706', background: 'rgba(245,158,11,0.15)', display: 'inline-block', marginTop: '0.3rem' }}>⏳ PENDING</span>
+                        </td>
+                        <td style={{ padding: '1rem 1.25rem' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#0f172a', fontWeight: '600' }}>{req.payment_method}</div>
+                          {req.transaction_reference && <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.2rem' }}>Ref: {req.transaction_reference}</div>}
+                        </td>
+                        <td style={{ padding: '1rem 1.25rem' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#475569', fontStyle: 'italic', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.remarks || '-'}</div>
+                        </td>
+                        <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button onClick={() => handleApprove(req.id)} disabled={submitting} style={{ padding: '0.5rem 0.75rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <CheckCircle2 size={14} /> Approve
+                            </button>
+                            <button onClick={() => { setSelectedRequest(req); setShowRejectModal(true); }} style={{ padding: '0.5rem 0.75rem', background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.3)', borderRadius: '6px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                              <XCircle size={14} /> Reject
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            {pendingRequests.length > 0 && requestsPagination && (
+              <div style={{ marginTop: '1.5rem' }}>
+                <Pagination pagination={requestsPagination} onPageChange={setRequestsPage} />
               </div>
             )}
           </>
@@ -516,7 +600,7 @@ export default function PaymentsPage() {
             </div>
             <p style={{ color: '#64748b', fontSize: '0.85rem', marginBottom: '1.25rem' }}>Auto-creates rent invoices for all <strong>ACTIVE residents</strong> based on their agreed allocation rent.</p>
             <form onSubmit={handleGenerateInvoices} style={{ display: 'grid', gap: '1rem' }}>
-              <div><label style={labelStyle}>Billing Month & Year *</label><input type="text" required placeholder="e.g. October 2023" value={generateMonth} onChange={(e) => setGenerateMonth(e.target.value)} style={inputStyle} /></div>
+              <div><label style={labelStyle}>Billing Month & Year *</label><input type="month" required value={generateMonth} onChange={(e) => setGenerateMonth(e.target.value)} style={inputStyle} /></div>
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <button type="button" onClick={() => setShowGenerateModal(false)} style={{ flex: 1, padding: '0.75rem', background: 'transparent', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
                 <button type="submit" disabled={submitting} style={{ flex: 1, padding: '0.75rem', background: 'linear-gradient(135deg, #ffd369, #faab36)', color: '#060913', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer' }}>{submitting ? 'Generating...' : 'Generate Bills'}</button>

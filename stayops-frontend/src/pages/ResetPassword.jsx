@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { authService } from '../services/api.service';
-import { Lock, Eye, EyeOff, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle, Building2 } from 'lucide-react';
 
 export default function ResetPassword() {
   const { token } = useParams();
@@ -18,14 +18,8 @@ export default function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (newPassword.length < 6) {
-      return setError('Password must be at least 6 characters long.');
-    }
-    if (newPassword !== confirmPassword) {
-      return setError('Passwords do not match.');
-    }
-
+    if (newPassword.length < 6) return setError('Password must be at least 6 characters long.');
+    if (newPassword !== confirmPassword) return setError('Passwords do not match.');
     setLoading(true);
     try {
       await authService.resetPassword(token, newPassword);
@@ -38,192 +32,204 @@ export default function ResetPassword() {
     }
   };
 
-  const fontStack = "'Source Sans Pro', ui-sans-serif, -apple-system, 'Segoe UI', sans-serif";
-  const serifStack = "'Iowan Old Style', 'Palatino Linotype', Georgia, serif";
-
   const inputStyle = {
-    width: '100%',
-    padding: '0.7rem 2.6rem 0.7rem 2.5rem',
-    background: '#FFFFFF',
-    border: '1px solid #D5D7D1',
-    borderRadius: '4px',
-    color: '#14171F',
-    fontSize: '0.9rem',
-    outline: 'none',
+    width: '100%', padding: '0.85rem 3rem 0.85rem 2.85rem',
+    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '12px', color: '#ffffff', fontSize: '0.92rem',
+    fontWeight: '500', outline: 'none', transition: 'border-color 0.2s, background 0.2s',
     boxSizing: 'border-box',
-    transition: 'border-color 0.15s, box-shadow 0.15s',
-  };
-
-  const focusInput = (e) => {
-    e.target.style.borderColor = '#2C3E8C';
-    e.target.style.boxShadow = '0 0 0 3px rgba(44,62,140,0.12)';
-  };
-  const blurInput = (e) => {
-    e.target.style.borderColor = '#D5D7D1';
-    e.target.style.boxShadow = 'none';
   };
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: '#F4F5F3',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1.5rem',
-      fontFamily: fontStack,
+      position: 'relative', minHeight: '100vh', width: '100%',
+      overflow: 'hidden', fontFamily: "'Inter', 'Segoe UI', sans-serif",
+      background: '#06100D',
     }}>
+      {/* Background gradient */}
       <div style={{
-        width: '100%',
-        maxWidth: '400px',
-        background: '#FFFFFF',
-        border: '1px solid #E3E4DE',
-        borderRadius: '4px',
-        boxShadow: '0 1px 2px rgba(20,23,31,0.04), 0 8px 24px rgba(20,23,31,0.06)',
-        overflow: 'hidden',
+        position: 'fixed', inset: 0, zIndex: 0,
+        background:
+          'radial-gradient(ellipse 140% 100% at 50% -30%, rgba(180,150,60,0.40) 0%, transparent 60%),' +
+          'radial-gradient(ellipse 120% 90% at 50% 120%, rgba(80,150,120,0.25) 0%, transparent 65%),' +
+          '#06100D',
+      }} />
+
+      {/* Nav */}
+      <nav style={{
+        position: 'fixed', top: 0, left: 0, right: 0,
+        padding: '1.25rem 2.5rem',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        zIndex: 50, background: 'transparent', boxSizing: 'border-box',
       }}>
-        {/* Thin identity bar */}
-        <div style={{ height: '4px', background: '#2C3E8C' }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <div style={{
+            width: '36px', height: '36px',
+            background: 'linear-gradient(135deg, #FFD369 0%, #FFC94D 100%)',
+            borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 14px rgba(255,211,105,0.5)',
+          }}>
+            <Building2 size={18} color="#06100D" />
+          </div>
+          <span style={{ color: '#ffffff', fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
+            StayOps
+          </span>
+        </div>
+      </nav>
 
-        <div style={{ padding: '2.75rem 2.5rem 2.5rem' }}>
-          {!success && (
-            <>
-              <div style={{
-                width: '40px', height: '40px',
-                border: '1px solid #DADCD6',
-                borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: '1.5rem',
-              }}>
-                <ShieldCheck size={18} color="#2C3E8C" strokeWidth={2} />
-              </div>
-
-              <h1 style={{
-                fontFamily: serifStack,
-                fontSize: '1.5rem',
-                fontWeight: '600',
-                color: '#14171F',
-                margin: '0 0 0.5rem',
-                letterSpacing: '-0.01em',
-              }}>
-                Set a new password
-              </h1>
-              <p style={{ color: '#5C6068', fontSize: '0.92rem', lineHeight: '1.5', margin: '0 0 2rem' }}>
-                Choose a password you haven't used before.
-              </p>
-            </>
-          )}
+      {/* Card Wrapper */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        display: 'flex', justifyContent: 'center', alignItems: 'center',
+        padding: '1rem', zIndex: 10,
+      }}>
+        <div style={{
+          position: 'relative', zIndex: 10,
+          width: '100%', maxWidth: '460px',
+          background: 'rgba(20,20,20,0.95)',
+          backdropFilter: 'blur(24px)',
+          borderRadius: '28px',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+          padding: '2.75rem 2.5rem',
+          textAlign: 'center',
+        }}>
 
           {success ? (
+            /* Success State */
             <div>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '1.5rem' }}>
-                <ShieldCheck size={18} color="#2C7A4B" style={{ marginTop: '2px', flexShrink: 0 }} />
-                <p style={{ color: '#3A3D42', fontSize: '0.9rem', lineHeight: '1.6', margin: 0 }}>
-                  <strong style={{ color: '#14171F' }}>Password updated.</strong> Taking you to login…
-                </p>
-              </div>
-
-              <Link to="/login" style={{
-                display: 'block', textAlign: 'center',
-                padding: '0.75rem',
-                background: '#2C3E8C',
-                borderRadius: '4px', color: '#FFFFFF',
-                fontWeight: '600', fontSize: '0.9rem', textDecoration: 'none',
+              <div style={{
+                width: '64px', height: '64px', margin: '0 auto 1.5rem',
+                background: 'rgba(52,211,153,0.12)', borderRadius: '20px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                border: '1px solid rgba(52,211,153,0.25)',
               }}>
-                Go to login
+                <CheckCircle size={28} color="#34d399" />
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: '900', color: '#ffffff', marginBottom: '0.6rem' }}>
+                Password Updated!
+              </h2>
+              <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.88rem', lineHeight: '1.6', marginBottom: '2rem' }}>
+                Your password has been reset successfully. Taking you to login…
+              </p>
+              <Link to="/login" style={{
+                display: 'block', padding: '0.95rem',
+                background: 'linear-gradient(135deg, #FFD369 0%, #FFC94D 100%)',
+                borderRadius: '14px', color: '#06100D', fontWeight: '800',
+                fontSize: '0.95rem', textDecoration: 'none',
+                boxShadow: '0 8px 24px rgba(255,211,105,0.35)',
+              }}>
+                Go to Login
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleSubmit}>
+            <>
+              {/* Header */}
+              <div style={{ marginBottom: '2rem' }}>
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  background: 'rgba(255,211,105,0.12)', border: '1px solid rgba(255,211,105,0.35)',
+                  color: '#FFD369', fontSize: '0.7rem', fontWeight: '700',
+                  textTransform: 'uppercase', letterSpacing: '0.12em',
+                  padding: '0.3rem 0.8rem', borderRadius: '100px', marginBottom: '1.25rem',
+                }}>
+                  Set New Password
+                </div>
+                <h1 style={{
+                  fontSize: '1.9rem', fontWeight: '900', color: '#ffffff',
+                  marginBottom: '0.5rem', letterSpacing: '-0.03em',
+                }}>
+                  Create new password
+                </h1>
+                <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.88rem', fontWeight: '500' }}>
+                  Choose a strong password you haven't used before
+                </p>
+              </div>
+
+              {/* Error */}
               {error && (
                 <div style={{
-                  background: '#FBF2F2',
-                  border: '1px solid #E8C6C6',
-                  color: '#9A3B3B',
-                  padding: '0.7rem 0.9rem',
-                  borderRadius: '4px',
-                  fontSize: '0.85rem',
-                  marginBottom: '1.25rem',
+                  background: 'rgba(248,113,113,0.12)', border: '1px solid rgba(248,113,113,0.3)',
+                  color: '#f87171', padding: '0.75rem 1rem', borderRadius: '12px',
+                  fontSize: '0.85rem', marginBottom: '1.25rem', textAlign: 'left',
                 }}>
                   {error}
                 </div>
               )}
 
-              {/* New Password */}
-              <div style={{ marginBottom: '1.25rem' }}>
-                <label style={{ display: 'block', color: '#14171F', fontSize: '0.82rem', fontWeight: '600', marginBottom: '0.4rem' }}>
-                  New password
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Lock size={16} color="#9CA0A6" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Min. 6 characters"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    style={inputStyle}
-                    onFocus={focusInput}
-                    onBlur={blurInput}
-                  />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9CA0A6', padding: 0 }}>
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
+              {/* Form */}
+              <form onSubmit={handleSubmit} style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
 
-              {/* Confirm Password */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', color: '#14171F', fontSize: '0.82rem', fontWeight: '600', marginBottom: '0.4rem' }}>
-                  Confirm password
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Lock size={16} color="#9CA0A6" style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    required
-                    placeholder="Re-enter new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    style={inputStyle}
-                    onFocus={focusInput}
-                    onBlur={blurInput}
-                  />
-                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9CA0A6', padding: 0 }}>
-                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+                {/* New Password */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                    New Password
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex' }}>
+                      <Lock size={16} color="rgba(255,255,255,0.3)" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required placeholder="Min. 6 characters"
+                      value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
+                      style={inputStyle}
+                      onFocus={(e) => { e.target.style.borderColor = 'rgba(255,211,105,0.5)'; e.target.style.background = 'rgba(255,255,255,0.08)'; }}
+                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.06)'; }}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', display: 'flex', padding: 0 }}>
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  background: loading ? '#9CA0A6' : '#2C3E8C',
-                  border: 'none',
-                  borderRadius: '4px',
-                  color: '#FFFFFF',
-                  fontWeight: '600',
-                  fontSize: '0.9rem',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  marginBottom: '1.5rem',
-                  transition: 'background 0.15s',
-                }}
-                onMouseEnter={(e) => { if (!loading) e.target.style.background = '#24316F'; }}
-                onMouseLeave={(e) => { if (!loading) e.target.style.background = '#2C3E8C'; }}
-              >
-                {loading ? 'Resetting…' : 'Reset password'}
-              </button>
+                {/* Confirm Password */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <label style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                    Confirm Password
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', display: 'flex' }}>
+                      <Lock size={16} color="rgba(255,255,255,0.3)" />
+                    </div>
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required placeholder="Re-enter new password"
+                      value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
+                      style={inputStyle}
+                      onFocus={(e) => { e.target.style.borderColor = 'rgba(255,211,105,0.5)'; e.target.style.background = 'rgba(255,255,255,0.08)'; }}
+                      onBlur={(e) => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.06)'; }}
+                    />
+                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.35)', cursor: 'pointer', display: 'flex', padding: 0 }}>
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit" disabled={loading}
+                  style={{
+                    width: '100%', padding: '0.95rem',
+                    background: loading ? 'rgba(255,211,105,0.5)' : 'linear-gradient(135deg, #FFD369 0%, #FFC94D 100%)',
+                    border: 'none', borderRadius: '14px',
+                    color: '#06100D', fontSize: '0.95rem', fontWeight: '800',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    boxShadow: loading ? 'none' : '0 8px 24px rgba(255,211,105,0.35)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {loading ? 'Resetting…' : 'Reset Password'}
+                </button>
+              </form>
 
               <Link to="/login" style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem',
-                color: '#5C6068', fontSize: '0.85rem', textDecoration: 'none', fontWeight: '500',
+                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem',
+                textDecoration: 'none', fontWeight: '500', marginTop: '1.5rem',
               }}>
                 <ArrowLeft size={14} /> Back to login
               </Link>
-            </form>
+            </>
           )}
         </div>
       </div>

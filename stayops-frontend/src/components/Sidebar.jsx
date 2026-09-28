@@ -16,6 +16,7 @@ import {
   Megaphone,
   X,
   Bell,
+  Settings,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -30,17 +31,18 @@ export default function Sidebar({ onClose, isMobile }) {
         { name: 'Payments & Dues', path: '/resident-payments', icon: CreditCard },
         { name: 'Maintenance', path: '/resident-maintenance', icon: Wrench },
         { name: 'Notice Board', path: '/notices', icon: Bell },
+        { name: 'Settings', path: '/settings', icon: Settings },
       ]
     : [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { name: 'PG Properties', path: '/pgs', icon: Building2 },
-        { name: 'Floors & Rooms', path: '/rooms', icon: Layers },
-        { name: 'Beds', path: '/beds', icon: Bed },
+        { name: 'Rooms & Beds', path: '/rooms', icon: Layers },
         { name: 'Residents', path: '/residents', icon: Users },
         { name: 'Allocations', path: '/allocations', icon: UserCheck },
         { name: 'Rent & Payments', path: '/payments', icon: CreditCard },
         { name: 'Maintenance', path: '/maintenance', icon: Wrench },
         { name: 'Announcements', path: '/notices', icon: Megaphone },
+        { name: 'Settings', path: '/settings', icon: Settings },
       ];
 
   const handleNavClick = () => {

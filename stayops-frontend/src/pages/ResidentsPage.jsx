@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { residentService } from '../services/api.service';
-import { Users, Plus, X, Phone, Mail, CheckCircle2, RefreshCw, FileText, ExternalLink, Image as ImageIcon, ShieldCheck, XCircle, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, Plus, X, Phone, Mail, CheckCircle2, RefreshCw, FileText, ExternalLink, Image as ImageIcon, ShieldCheck, XCircle, Edit, Trash2 } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const inputStyle = {
   width: '100%',
@@ -40,8 +41,8 @@ export default function ResidentsPage() {
 
   // Pagination states
   const [page, setPage] = useState(1);
-  const [limit] = useState(6);
-  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1, limit: 6 });
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState({ total: 0, totalPages: 1, page: 1, limit: 10 });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -266,168 +267,107 @@ export default function ResidentsPage() {
             </button>
           </div>
         ) : (
-          <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem', width: '100%' }}>
-              {residents.map((r) => {
-                const allocation = r.current_allocation;
-                const photoUrl = getImageUrl(r.profile_photo_url);
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', overflowX: 'auto', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '800px' }}>
+              <thead style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <tr>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Resident</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Contact Info</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Bed Allocation</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569' }}>Status</th>
+                  <th style={{ padding: '1rem 1.25rem', fontSize: '0.85rem', fontWeight: '700', color: '#475569', textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {residents.map((r) => {
+                  const allocation = r.current_allocation;
+                  const photoUrl = getImageUrl(r.profile_photo_url);
 
-                return (
-                  <div
-                    key={r.id}
-                    onClick={() => setSelectedResident(r)}
-                    className="card-animated"
-                    style={{
-                      background: 'var(--gradient-card)',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '14px',
-                      padding: '1.4rem',
-                      cursor: 'pointer',
-                      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                  return (
+                    <tr key={r.id} style={{ borderBottom: '1px solid #e2e8f0', transition: 'background 0.2s', cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'} onClick={() => setSelectedResident(r)}>
+                      <td style={{ padding: '1rem 1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                           {photoUrl ? (
                             <img
                               src={photoUrl}
                               alt={r.full_name || r.name}
-                              style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(99,102,241,0.5)' }}
+                              style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(99,102,241,0.5)' }}
                             />
                           ) : (
-                            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '1.2rem', color: '#fff' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '1rem', color: '#fff' }}>
                               {(r.full_name || r.name || 'R').charAt(0).toUpperCase()}
                             </div>
                           )}
+                          <div style={{ fontWeight: '700', color: '#0f172a' }}>{r.full_name || r.name}</div>
+                        </div>
+                      </td>
+                      
+                      <td style={{ padding: '1rem 1.25rem' }}>
+                        <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                          <Phone size={14} /> {r.phone}
+                        </div>
+                        {r.email && (
+                          <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.25rem' }}>
+                            <Mail size={14} /> {r.email}
+                          </div>
+                        )}
+                      </td>
+
+                      <td style={{ padding: '1rem 1.25rem' }}>
+                        {allocation ? (
                           <div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#060913' }}>{r.full_name || r.name}</h3>
-                            <div style={{ fontSize: '0.8rem', color: '#060913', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.15rem' }}>
-                              <Phone size={12} /> {r.phone}
+                            <div style={{ fontWeight: '600', color: '#0f172a' }}>{allocation.pg?.name}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                              Room {allocation.room?.room_number} • Bed {String(allocation.bed?.bed_number).replace(/^bed[-_\s]*/i, '')}
                             </div>
                           </div>
-                        </div>
+                        ) : (
+                          <span style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: '600', background: '#fffbeb', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>Unallocated</span>
+                        )}
+                      </td>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      <td style={{ padding: '1rem 1.25rem' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: r.status === 'ACTIVE' ? '#10b981' : '#64748b', background: r.status === 'ACTIVE' ? '#d1fae5' : '#f1f5f9', padding: '0.3rem 0.6rem', borderRadius: '6px' }}>
+                          {r.status || 'ACTIVE'}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                           <button
                             onClick={(e) => openEditModal(r, e)}
                             title="Edit Profile"
-                            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#818cf8', padding: '0.4rem', borderRadius: '6px' }}
+                            style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#4f46e5', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' }}
                           >
-                            <Edit size={15} />
+                            <Edit size={16} />
                           </button>
                           <button
                             onClick={(e) => handleDeleteResident(r.id, e)}
                             title="Delete Resident"
-                            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171', padding: '0.4rem', borderRadius: '6px' }}
+                            style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', padding: '0.4rem', borderRadius: '6px', cursor: 'pointer' }}
                           >
-                            <Trash2 size={15} />
+                            <Trash2 size={16} />
                           </button>
                         </div>
-                      </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
 
-                      {/* Allocation Status Badge */}
-                      <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '10px', padding: '0.85rem', marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#060913', fontWeight: '700', letterSpacing: '0.05em', marginBottom: '0.3rem' }}>
-                          Current Room Allocation
-                        </div>
-                        {allocation ? (
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#060913' }}>
-                              {allocation.pg?.name} • Room {allocation.room?.room_number} (Bed {String(allocation.bed?.bed_number).replace(/^bed[-_\s]*/i, '')})
-                            </span>
-                            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: '#10b981', background: 'rgba(16,185,129,0.15)', padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
-                              ALLOCATED
-                            </span>
-                          </div>
-                        ) : (
-                          <div style={{ fontSize: '0.85rem', color: '#f59e0b', fontWeight: '600' }}>
-                            Unallocated (No bed assigned)
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid #e2e8f0' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#060913' }}>Click card to view details & ID</span>
-                      <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                        View Profile &rarr;
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Backend Pagination Bar Component */}
             {pagination.totalPages > 1 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginTop: '2rem', background: 'var(--gradient-card)', padding: '1rem 1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <div style={{ color: '#060913', fontSize: '0.88rem' }}>
-                  Showing Page <strong style={{ color: '#fff' }}>{pagination.page}</strong> of <strong style={{ color: '#fff' }}>{pagination.totalPages}</strong> ({pagination.total} total residents)
-                </div>
-                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                  <button
-                    disabled={pagination.page <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    style={{
-                      padding: '0.45rem 0.9rem',
-                      background: pagination.page <= 1 ? 'rgba(255,255,255,0.05)' : '#374151',
-                      color: pagination.page <= 1 ? '#374151' : '#060913',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '0.85rem',
-                      cursor: pagination.page <= 1 ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                    }}
-                  >
-                    <ChevronLeft size={16} /> Prev
-                  </button>
-
-                  {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((pNum) => (
-                    <button
-                      key={pNum}
-                      onClick={() => setPage(pNum)}
-                      style={{
-                        padding: '0.45rem 0.8rem',
-                        background: pNum === pagination.page ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)' : 'rgba(255,255,255,0.05)',
-                        color: '#fff',
-                        borderRadius: '8px',
-                        fontWeight: pNum === pagination.page ? '700' : '600',
-                        fontSize: '0.85rem',
-                        boxShadow: pNum === pagination.page ? '0 4px 12px rgba(99, 102, 241, 0.3)' : 'none',
-                      }}
-                    >
-                      {pNum}
-                    </button>
-                  ))}
-
-                  <button
-                    disabled={pagination.page >= pagination.totalPages}
-                    onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                    style={{
-                      padding: '0.45rem 0.9rem',
-                      background: pagination.page >= pagination.totalPages ? 'rgba(255,255,255,0.05)' : '#374151',
-                      color: pagination.page >= pagination.totalPages ? '#374151' : '#060913',
-                      borderRadius: '8px',
-                      fontWeight: '600',
-                      fontSize: '0.85rem',
-                      cursor: pagination.page >= pagination.totalPages ? 'not-allowed' : 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.3rem',
-                    }}
-                  >
-                    Next <ChevronRight size={16} />
-                  </button>
-                </div>
-              </div>
+              <Pagination
+                pagination={{
+                  currentPage: pagination.page,
+                  totalPages: pagination.totalPages,
+                  totalItems: pagination.total,
+                  pageSize: pagination.limit
+                }}
+                onPageChange={setPage}
+              />
             )}
-          </>
+          </div>
         )}
       </div>
 

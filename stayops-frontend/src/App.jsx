@@ -17,6 +17,7 @@ import ResidentPaymentsPage from './pages/resident/ResidentPaymentsPage';
 import ResidentMaintenancePage from './pages/resident/ResidentMaintenancePage';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import SettingsPage from './pages/SettingsPage';
 
 // Applies the correct CSS theme on <html> based on user role
 function ThemeController() {
@@ -63,7 +64,7 @@ export default function App() {
             <Route path="dashboard" element={<RoleBasedDashboard />} />
             <Route path="pgs" element={<PgsPage />} />
             <Route path="rooms" element={<RoomsPage />} />
-            <Route path="beds" element={<BedsPage />} />
+            <Route path="beds" element={<RoomsPage />} />
             <Route path="residents" element={<ResidentsPage />} />
             <Route path="allocations" element={<AllocationsPage />} />
             <Route path="payments" element={<PaymentsPage />} />
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="maintenance" element={<MaintenancePage />} />
             <Route path="resident-maintenance" element={<ResidentMaintenancePage />} />
             <Route path="notices" element={<NoticesPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

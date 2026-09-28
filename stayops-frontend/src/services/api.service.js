@@ -4,6 +4,9 @@ export const authService = {
   login: (credentials) => api.post('/auth/login', credentials),
   registerOwner: (data) => api.post('/auth/register/owner', data),
   getMe: () => api.get('/auth/me'),
+  getProfile: () => api.get('/auth/profile'),
+  updateProfile: (data) => api.patch('/auth/profile', data),
+  changePassword: (data) => api.post('/auth/change-password', data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
 };
@@ -81,7 +84,7 @@ export const paymentService = {
   approvePayment: (id) => api.patch(`/payments/${id}/approve`),
   rejectPayment: (id, reason) => api.patch(`/payments/${id}/reject`, { rejection_reason: reason }),
   getPayments: (params) => api.get('/payments', { params }),
-  getPendingRequests: () => api.get('/payments/pending'),
+  getPendingRequests: (params) => api.get('/payments/pending', { params }),
 };
 
 export const maintenanceService = {

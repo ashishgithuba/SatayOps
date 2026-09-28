@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { noticeService, floorService, roomService, pgService } from '../services/api.service';
 import { Megaphone, Plus, X, RefreshCw, CheckCircle2, FileText, Send, Trash2, CalendarClock } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const inputStyle = {
   width: '100%',
@@ -34,6 +35,10 @@ export default function NoticesPage() {
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState('ALL'); // ALL, DRAFT, PUBLISHED, EXPIRED
+  
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState(null);
   
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -68,8 +73,11 @@ export default function NoticesPage() {
   useEffect(() => {
     if (isResident) {
       setLoading(true);
-      noticeService.getNotices({ status: 'PUBLISHED' })
-        .then(res => setNotices(res.data || []))
+      noticeService.getNotices({ status: 'PUBLISHED', page, limit })
+        .then(res => {
+          setNotices(res.data || []);
+          setPagination(res.pagination || null);
+        })
         .catch(console.error)
         .finally(() => setLoading(false));
       return;
@@ -78,19 +86,23 @@ export default function NoticesPage() {
     if (!activePgId) return;
     setLoading(true);
     Promise.all([
-      noticeService.getNotices({ pg_id: activePgId }),
+      noticeService.getNotices({ pg_id: activePgId, page, limit }),
       floorService.getFloorsByPg(activePgId),
     ]).then(([noticesRes, floorsRes]) => {
       setNotices(noticesRes.data || []);
+      setPagination(noticesRes.pagination || null);
       setFloors(floorsRes.data || []);
     }).catch(console.error)
       .finally(() => setLoading(false));
-  }, [activePgId, isResident]);
+  }, [activePgId, isResident, page]);
 
   const fetchNotices = () => {
     if (!activePgId) return;
-    noticeService.getNotices({ pg_id: activePgId })
-      .then(res => setNotices(res.data || []))
+    noticeService.getNotices({ pg_id: activePgId, page, limit })
+      .then(res => {
+        setNotices(res.data || []);
+        setPagination(res.pagination || null);
+      })
       .catch(console.error);
   };
 
@@ -150,17 +162,6 @@ export default function NoticesPage() {
       fetchNotices();
     } catch (err) {
       setError(err.message || 'Failed to publish');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this notice?')) return;
-    try {
-      await noticeService.deleteNotice(id);
-      showSuccess('🗑️ Notice deleted');
-      fetchNotices();
-    } catch (err) {
-      setError(err.message || 'Failed to delete');
     }
   };
 
@@ -288,20 +289,21 @@ export default function NoticesPage() {
               </div>
               
               
-              {!isResident && (
+              {!isResident && notice.status === 'DRAFT' && (
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {notice.status === 'DRAFT' && (
-                    <button onClick={() => handlePublish(notice.id, notice.target_type)} style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '800', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem' }}>
-                      <Send size={14} /> Publish Now
-                    </button>
-                  )}
-                  <button onClick={() => handleDelete(notice.id)} style={{ padding: '0.6rem', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', borderRadius: '8px', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', flex: notice.status === 'DRAFT' ? 'none' : 1 }}>
-                    <Trash2 size={16} /> {notice.status !== 'DRAFT' && 'Delete'}
+                  <button onClick={() => handlePublish(notice.id, notice.target_type)} style={{ flex: 1, padding: '0.6rem', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '800', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem' }}>
+                    <Send size={14} /> Publish Now
                   </button>
                 </div>
               )}
             </div>
           ))}
+        </div>
+      )}
+      
+      {filteredNotices.length > 0 && pagination && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <Pagination pagination={pagination} onPageChange={setPage} />
         </div>
       )}
       </div>

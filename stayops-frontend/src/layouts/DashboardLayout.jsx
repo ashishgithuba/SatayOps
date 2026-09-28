@@ -18,7 +18,7 @@ export default function DashboardLayout() {
   }, []);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', overflowY: 'auto' }}>
+    <div style={{ display: 'flex', height: '100vh', position: 'relative', overflow: 'hidden' }}>
       {/* Mobile Overlay */}
       {isMobile && sidebarOpen && (
         <div
@@ -50,7 +50,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Main Content */}
-      <main style={{ flex: 1, minWidth: 0 }}>
+      <main style={{ flex: 1, minWidth: 0, height: '100vh', overflowY: 'auto' }}>
         {/* Mobile Top Navbar */}
         {isMobile && (
           <div

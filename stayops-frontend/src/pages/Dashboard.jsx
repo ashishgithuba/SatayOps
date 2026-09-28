@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { pgService, roomService, bedService, residentService, allocationService } from '../services/api.service';
+import { useNavigate } from 'react-router-dom';
+import { pgService, roomService, bedService, residentService, allocationService, invoiceService } from '../services/api.service';
 import { Building2, Layers, Bed, Users, UserCheck, TrendingUp, ArrowUpRight, Activity, PieChart as PieIcon, BarChart3, Calendar } from 'lucide-react';
 import {
   AreaChart,
@@ -53,6 +54,7 @@ if (typeof document !== 'undefined' && !document.querySelector('[data-scrollbar-
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     pgs: 0,
     rooms: 0,
@@ -65,6 +67,9 @@ export default function Dashboard() {
   const [roomTypeData, setRoomTypeData] = useState([]);
   const [pieData, setPieData] = useState([]);
   const [monthlyTrend, setMonthlyTrend] = useState([]);
+  const [earningsFilter, setEarningsFilter] = useState('monthly');
+  const [monthlyEarningsData, setMonthlyEarningsData] = useState([]);
+  const [yearlyEarningsData, setYearlyEarningsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -79,12 +84,13 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [pgRes, roomRes, bedRes, resRes, allocRes] = await Promise.allSettled([
+        const [pgRes, roomRes, bedRes, resRes, allocRes, invRes] = await Promise.allSettled([
           pgService.getMyPgs(),
           roomService.getRoomsByPg(),
           bedService.getBeds(),
           residentService.getResidents(),
           allocationService.getAllocations(),
+          invoiceService.getInvoices(),
         ]);
 
         const pgsList = pgRes.status === 'fulfilled' ? pgRes.value.data || [] : [];
@@ -92,6 +98,7 @@ export default function Dashboard() {
         const bedsList = bedRes.status === 'fulfilled' ? bedRes.value.data || [] : [];
         const residentsList = resRes.status === 'fulfilled' ? resRes.value.data || [] : [];
         const allocsList = allocRes.status === 'fulfilled' ? allocRes.value.data || [] : [];
+        const invoicesList = invRes.status === 'fulfilled' ? invRes.value.data || [] : [];
 
         const activeAllocs = allocsList.filter((a) => a.status === 'ACTIVE').length || allocsList.length;
         const availableB = bedsList.filter((b) => b.status === 'AVAILABLE').length;
@@ -146,15 +153,85 @@ export default function Dashboard() {
               ]
         );
 
-        // Monthly Trend Area Chart Data
-        setMonthlyTrend([
-          { month: 'Jan', CheckIns: 12, Revenue: 90000 },
-          { month: 'Feb', CheckIns: 18, Revenue: 135000 },
-          { month: 'Mar', CheckIns: 15, Revenue: 112000 },
-          { month: 'Apr', CheckIns: 24, Revenue: 180000 },
-          { month: 'May', CheckIns: 30, Revenue: 225000 },
-          { month: 'Jun', CheckIns: activeAllocs || 28, Revenue: (activeAllocs || 28) * 7500 },
-        ]);
+        // Calculate dynamic monthly and yearly earnings
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const currentDate = new Date();
+        const currentMonth = currentDate.getMonth();
+        const currentYear = currentDate.getFullYear();
+        
+        const monthlyData = [];
+        for (let i = 5; i >= 0; i--) {
+          let m = currentMonth - i;
+          let y = currentYear;
+          if (m < 0) {
+            m += 12;
+            y -= 1;
+          }
+          monthlyData.push({ monthIndex: m, year: y, name: `${monthNames[m]} ${y}`, Income: 0, Allocations: 0 });
+        }
+
+        const yearlyData = [];
+        for (let i = 3; i >= 0; i--) {
+          yearlyData.push({ name: String(currentYear - i), year: currentYear - i, Income: 0, Allocations: 0 });
+        }
+
+        invoicesList.forEach(inv => {
+          const invDate = new Date(inv.created_at || new Date());
+          const m = invDate.getMonth();
+          const y = invDate.getFullYear();
+          const amountPaid = Number(inv.amount_paid) || 0;
+
+          const mData = monthlyData.find(d => d.monthIndex === m && d.year === y);
+          if (mData) mData.Income += amountPaid;
+
+          const yData = yearlyData.find(d => d.year === y);
+          if (yData) yData.Income += amountPaid;
+        });
+
+        allocsList.forEach(alloc => {
+          const allocDate = new Date(alloc.created_at || new Date());
+          const m = allocDate.getMonth();
+          const y = allocDate.getFullYear();
+
+          const mData = monthlyData.find(d => d.monthIndex === m && d.year === y);
+          if (mData) mData.Allocations += 1;
+
+          const yData = yearlyData.find(d => d.year === y);
+          if (yData) yData.Allocations += 1;
+        });
+
+        setMonthlyEarningsData(monthlyData);
+        setYearlyEarningsData(yearlyData);
+
+        const monthlyTrendData = [];
+        for (let i = 5; i >= 0; i--) {
+          let m = currentMonth - i;
+          let y = currentYear;
+          if (m < 0) {
+            m += 12;
+            y -= 1;
+          }
+          monthlyTrendData.push({ monthIndex: m, year: y, month: monthNames[m], CheckIns: 0, Revenue: 0 });
+        }
+
+        allocsList.forEach(alloc => {
+          const checkInDate = new Date(alloc.check_in_date || alloc.created_at || new Date());
+          const m = checkInDate.getMonth();
+          const y = checkInDate.getFullYear();
+          const tData = monthlyTrendData.find(d => d.monthIndex === m && d.year === y);
+          if (tData) tData.CheckIns += 1;
+        });
+
+        invoicesList.forEach(inv => {
+          const invDate = new Date(inv.created_at || new Date());
+          const m = invDate.getMonth();
+          const y = invDate.getFullYear();
+          const amountPaid = Number(inv.amount_paid) || 0;
+          const tData = monthlyTrendData.find(d => d.monthIndex === m && d.year === y);
+          if (tData) tData.Revenue += amountPaid;
+        });
+
+        setMonthlyTrend(monthlyTrendData);
       } catch (err) {
         console.error('Error loading dashboard stats:', err);
       } finally {
@@ -169,11 +246,12 @@ export default function Dashboard() {
   const occupiedPct = Math.round((stats.activeAllocations / totalBeds) * 100) || 0;
 
   const cards = [
-    { title: 'Properties Managed', value: stats.pgs, label: 'Active PGs', icon: Building2, gradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', badge: '+100%' },
-    { title: 'Total Rooms', value: stats.rooms, label: 'Capacity', icon: Layers, gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', badge: 'Optimal' },
-    { title: 'Total Beds', value: stats.beds, label: 'Inventory', icon: Bed, gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', badge: 'Live' },
-    { title: 'Registered Residents', value: stats.residents, label: 'Total Occupants', icon: Users, gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', badge: 'Verified' },
-    { title: 'Active Allocations', value: stats.activeAllocations, label: 'Occupied Beds', icon: UserCheck, gradient: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', badge: `${occupiedPct}% Occupied` },
+    { title: 'Properties Managed', value: stats.pgs, label: 'Active PGs', icon: Building2, gradient: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)', badge: '+100%', path: '/pgs' },
+    { title: 'Total Rooms', value: stats.rooms, label: 'Capacity', icon: Layers, gradient: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)', badge: 'Optimal', path: '/rooms' },
+    { title: 'Total Beds', value: stats.beds, label: 'Inventory', icon: Bed, gradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', badge: 'Live', path: '/beds' },
+    { title: 'Available Beds', value: stats.availableBeds, label: 'Ready to occupy', icon: Bed, gradient: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', badge: 'Available', path: '/beds' },
+    { title: 'Registered Residents', value: stats.residents, label: 'Total Occupants', icon: Users, gradient: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', badge: 'Verified', path: '/residents' },
+    { title: 'Active Allocations', value: stats.activeAllocations, label: 'Occupied Beds', icon: UserCheck, gradient: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', badge: `${occupiedPct}% Occupied`, path: '/allocations' },
   ];
 
   // Custom Recharts Dark Tooltip
@@ -258,6 +336,7 @@ export default function Dashboard() {
               <div
                 key={idx}
                 className="card-animated"
+                onClick={() => card.path && navigate(card.path)}
                 style={{
                   background: 'var(--gradient-card)',
                   border: '1px solid #e2e8f0',
@@ -267,6 +346,7 @@ export default function Dashboard() {
                   overflow: 'hidden',
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
                   animationDelay: `${idx * 0.06}s`,
+                  cursor: card.path ? 'pointer' : 'default',
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -378,30 +458,59 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Recharts Chart 3: Room Type Capacity Bar Chart */}
+      {/* Recharts Chart 3: Earnings Bar Chart */}
       <div className="card-animated" style={{ background: 'var(--gradient-card)', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.6rem', boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: '#060913', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <BarChart3 size={20} color="#0ea5e9" /> Room Sharing Occupancy Comparison
+              <BarChart3 size={20} color="#10b981" /> Earnings Overview
             </h3>
-            <p style={{ color: '#060913', fontSize: '0.82rem', marginTop: '0.2rem' }}>Recharts Bar chart comparing total capacity vs occupied beds per room type</p>
+            <p style={{ color: '#060913', fontSize: '0.82rem', marginTop: '0.2rem' }}>Total income and allocations</p>
           </div>
-          <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#0ea5e9', background: 'rgba(14, 165, 233, 0.15)', padding: '0.25rem 0.65rem', borderRadius: '6px' }}>
-            Recharts Bar
-          </span>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={() => setEarningsFilter('monthly')}
+              style={{
+                padding: '0.4rem 0.8rem',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: '700',
+                border: 'none',
+                cursor: 'pointer',
+                background: earningsFilter === 'monthly' ? '#10b981' : '#e2e8f0',
+                color: earningsFilter === 'monthly' ? '#fff' : '#475569',
+              }}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setEarningsFilter('yearly')}
+              style={{
+                padding: '0.4rem 0.8rem',
+                borderRadius: '6px',
+                fontSize: '0.8rem',
+                fontWeight: '700',
+                border: 'none',
+                cursor: 'pointer',
+                background: earningsFilter === 'yearly' ? '#10b981' : '#e2e8f0',
+                color: earningsFilter === 'yearly' ? '#fff' : '#475569',
+              }}
+            >
+              Yearly
+            </button>
+          </div>
         </div>
 
         <div style={{ width: '100%', height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={roomTypeData} barSize={14} barGap={6} barCategoryGap="35%" margin={{ top: 10, right: 30, left: -10, bottom: 0 }}>
+            <BarChart data={earningsFilter === 'monthly' ? monthlyEarningsData : yearlyEarningsData} barSize={14} barGap={6} barCategoryGap="35%" margin={{ top: 10, right: 30, left: -10, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.06)" />
               <XAxis dataKey="name" stroke="#475569" fontSize={12} tickLine={false} />
               <YAxis stroke="#475569" fontSize={12} tickLine={false} />
               <Tooltip content={<CustomTooltip />} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '0.82rem', color: '#060913' }} />
-              <Bar dataKey="Total" fill="#e2e8f0" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Occupied" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="Allocations" fill="#6366f1" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { maintenanceService, residentService, pgService } from '../services/api.service';
 import { AlertTriangle, Plus, X, RefreshCw, CheckCircle2, Clock, Wrench, ShieldCheck, Filter } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 const inputStyle = {
   width: '100%',
@@ -33,6 +34,10 @@ export default function MaintenancePage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [pagination, setPagination] = useState(null);
 
   const [statusForm, setStatusForm] = useState({
     status: '',
@@ -44,11 +49,12 @@ export default function MaintenancePage() {
     setLoading(true);
     try {
       const [reqRes, resRes, pgRes] = await Promise.all([
-        maintenanceService.getRequests(),
+        maintenanceService.getRequests({ page, limit }),
         residentService.getResidents(),
         pgService.getMyPgs(),
       ]);
       setRequests(reqRes.data || []);
+      setPagination(reqRes.pagination || null);
       setResidents(resRes.data || []);
       // Auto-set pg_id context if needed
       if (pgRes.data && pgRes.data.length > 0 && !localStorage.getItem('activePgId')) {
@@ -61,7 +67,7 @@ export default function MaintenancePage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [page]);
 
   const showSuccess = (msg) => {
     setSuccessMsg(msg);
@@ -210,6 +216,12 @@ export default function MaintenancePage() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+      
+      {filteredRequests.length > 0 && pagination && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <Pagination pagination={pagination} onPageChange={setPage} />
         </div>
       )}
 
