@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { residentService } from '../services/api.service';
 import { Users, Plus, X, Phone, Mail, CheckCircle2, RefreshCw, FileText, ExternalLink, Image as ImageIcon, ShieldCheck, XCircle, Edit, Trash2 } from 'lucide-react';
 import Pagination from '../components/Pagination';
-
 const inputStyle = {
   width: '100%',
   padding: '0.7rem 0.85rem',
@@ -29,7 +28,6 @@ const getImageUrl = (url) => {
   const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
   return `${baseUrl}${cleanUrl}`;
 };
-
 export default function ResidentsPage() {
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
