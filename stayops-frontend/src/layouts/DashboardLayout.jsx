@@ -72,7 +72,7 @@ export default function DashboardLayout() {
             >
               <Menu size={24} />
             </button>
-            <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#f9fafb' }}>StayOps</span>
+            <span style={{ fontWeight: '800', fontSize: '1.1rem', color: '#f9fafb' }}>Livnex</span>
             <div style={{ width: 24 }} />
           </div>
         )}

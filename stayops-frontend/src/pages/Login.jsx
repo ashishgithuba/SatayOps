@@ -382,7 +382,7 @@ export default function Login() {
             <div style={S.logoIcon}>
               <Building2 size={18} color="#0F0F0F" strokeWidth={2.5} />
             </div>
-            <span style={S.logoText}>StayOps</span>
+            <span style={S.logoText}>Livnex</span>
           </div>
           <button style={S.supportBtn} className="so-support">Support</button>
         </nav>
@@ -401,7 +401,7 @@ export default function Login() {
                 <Shield size={11} /> Premium Residence Management
               </div>
               <h1 style={S.h1}>Welcome Back</h1>
-              <p style={S.subtitle}>Sign in to your StayOps dashboard</p>
+              <p style={S.subtitle}>Sign in to your Livnex dashboard</p>
             </div>
 
             {/* Form */}

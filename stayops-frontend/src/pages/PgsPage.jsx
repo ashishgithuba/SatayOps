@@ -344,7 +344,7 @@ export default function PgsPage() {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    placeholder="e.g. StayOps Executive PG"
+                    placeholder="e.g. Livnex Executive PG"
                     style={inputStyle}
                   />
                 </div>

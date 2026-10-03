@@ -6,7 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
-      const stored = localStorage.getItem('stayops_user');
+      const stored = localStorage.getItem('livnex_user');
       return stored ? JSON.parse(stored) : null;
     } catch (e) {
       return null;
@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
 
       const { token, ...userData } = payload;
 
-      localStorage.setItem('stayops_token', token);
-      localStorage.setItem('stayops_user', JSON.stringify(userData));
+      localStorage.setItem('livnex_token', token);
+      localStorage.setItem('livnex_user', JSON.stringify(userData));
       setUser(userData);
       return res;
     } catch (err) {
@@ -47,8 +47,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('stayops_token');
-    localStorage.removeItem('stayops_user');
+    localStorage.removeItem('livnex_token');
+    localStorage.removeItem('livnex_user');
     setUser(null);
     window.location.href = '/login';
   };

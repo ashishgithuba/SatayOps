@@ -58,7 +58,7 @@ export default function ForgotPassword() {
             <Building2 size={18} color="#06100D" />
           </div>
           <span style={{ color: '#ffffff', fontSize: '1.2rem', fontWeight: '800', letterSpacing: '-0.02em' }}>
-            StayOps
+            Livnex
           </span>
         </div>
       </nav>

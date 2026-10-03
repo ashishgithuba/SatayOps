@@ -10,7 +10,7 @@ const api = axios.create({
 // Request Interceptor: Attach Token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('stayops_token');
+    const token = localStorage.getItem('livnex_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,8 +24,8 @@ api.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('stayops_token');
-      localStorage.removeItem('stayops_user');
+      localStorage.removeItem('livnex_token');
+      localStorage.removeItem('livnex_user');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }

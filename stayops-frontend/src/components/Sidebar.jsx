@@ -94,7 +94,7 @@ export default function Sidebar({ onClose, isMobile }) {
           </div>
           <div>
             <div style={{ fontSize: '1.35rem', fontWeight: '900', letterSpacing: '-0.02em', color: '#0f172a' }}>
-              StayOps
+              Livnex
             </div>
             <div style={{
               fontSize: '0.7rem',
