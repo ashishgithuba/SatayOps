@@ -62,7 +62,7 @@ const createResident = async (residentData, ownerId, files) => {
   let createdUserId = null;
 
   if (email || create_login_account) {
-    const targetEmail = email || `${phone}@stayops.local`;
+    const targetEmail = email || `${phone}@livnex.local`;
     let userAccount = await User.findOne({ where: { email: targetEmail } });
 
     if (!userAccount) {

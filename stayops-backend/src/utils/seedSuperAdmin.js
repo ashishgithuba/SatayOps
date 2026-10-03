@@ -4,7 +4,7 @@ const { ROLES, STATUS } = require('../constants/roles');
 
 const seedSuperAdmin = async () => {
   try {
-    const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@stayops.com';
+    const adminEmail = process.env.SUPER_ADMIN_EMAIL || 'admin@livnex.com';
     const adminPhone = process.env.SUPER_ADMIN_PHONE || '0000000000';
     const adminPassword = process.env.SUPER_ADMIN_PASSWORD || 'Admin@123456';
 

@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'StayOps API is running' });
+  res.status(200).json({ status: 'OK', message: 'Livnex API is running' });
 });
 
 app.use('/api', routes);

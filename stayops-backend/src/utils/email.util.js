@@ -21,9 +21,9 @@ const sendPasswordResetEmail = async (toEmail, toName, resetToken) => {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
 
   const mailOptions = {
-    from: process.env.EMAIL_FROM || 'StayOps <noreply@stayops.com>',
+    from: process.env.EMAIL_FROM || 'Livnex <noreply@livnex.com>',
     to: `${toName} <${toEmail}>`,
-    subject: 'Reset your StayOps password',
+    subject: 'Reset your Livnex password',
     html: `
       <!DOCTYPE html>
       <html>
@@ -46,7 +46,7 @@ const sendPasswordResetEmail = async (toEmail, toName, resetToken) => {
                 <!-- Header -->
                 <tr>
                   <td style="padding:32px 40px 0;">
-                    <span style="color:#14171F;font-size:16px;font-weight:700;letter-spacing:-0.2px;">StayOps</span>
+                    <span style="color:#14171F;font-size:16px;font-weight:700;letter-spacing:-0.2px;">Livnex</span>
                     <p style="color:#9CA0A6;font-size:11px;margin:2px 0 0;letter-spacing:0.4px;text-transform:uppercase;">Residence Management System</p>
                   </td>
                 </tr>
@@ -58,7 +58,7 @@ const sendPasswordResetEmail = async (toEmail, toName, resetToken) => {
                       Reset your password
                     </h1>
                     <p style="color:#5C6068;font-size:14px;line-height:1.6;margin:0 0 26px;">
-                      Hi ${toName}, we received a request to reset the password on your StayOps account. Click below to choose a new one.
+                      Hi ${toName}, we received a request to reset the password on your Livnex account. Click below to choose a new one.
                     </p>
 
                     <!-- CTA Button -->
@@ -88,7 +88,7 @@ const sendPasswordResetEmail = async (toEmail, toName, resetToken) => {
                 <tr>
                   <td style="background:#F9F9F7;padding:16px 40px;text-align:center;border-top:1px solid #E3E4DE;">
                     <p style="color:#9CA0A6;font-size:11px;margin:0;">
-                      © ${new Date().getFullYear()} StayOps. All rights reserved.
+                      © ${new Date().getFullYear()} Livnex. All rights reserved.
                     </p>
                   </td>
                 </tr>
